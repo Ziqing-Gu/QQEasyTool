@@ -1,0 +1,25 @@
+build*/
+build-vs/
+build-local/
+*_artefacts/
+.vs/
+.vscode/
+*.user
+*.suo
+*.vcxproj.user
+*.log
+*.tmp
+*.pyc
+__pycache__/
+dist/
+out/
+temp/
+work-tests*/
+*.vst3/
+
+# Legacy QQDeBreath release notes retained only in local development backups.
+VERSION_ARA_*.txt
+docs/QQDeBreath-*
+docs/ara_*
+docs/build_windows.md
+docs/phase*.md

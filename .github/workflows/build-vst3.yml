@@ -1,0 +1,168 @@
+name: Build QQEasyTool VST3 and AU
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "CMakeLists.txt"
+      - "src/**"
+      - "tests/**"
+      - "external/ARA_SDK"
+      - ".gitmodules"
+      - ".github/workflows/build-vst3.yml"
+
+jobs:
+  macos-arm64:
+    name: macOS Apple Silicon arm64 VST3
+    runs-on: macos-15
+    steps:
+      - name: Checkout source and ARA SDK
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Configure arm64 build
+        run: |
+          cmake -S . -B build-macos-arm64 -G Xcode \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DQQDEBREATH_COPY_AFTER_BUILD=OFF
+
+      - name: Build VST3
+        run: cmake --build build-macos-arm64 --config Release --target QQEasyTool_VST3 --parallel 3
+
+      - name: Verify, sign, and package
+        shell: bash
+        run: |
+          set -euo pipefail
+          plugin_path="$(find build-macos-arm64 -type d -name QQEasyTool.vst3 -path '*Release*' | head -n 1)"
+          test -n "$plugin_path"
+          binary="$plugin_path/Contents/MacOS/QQEasyTool"
+          lipo -archs "$binary" | tee QQEasyTool-macOS-Apple-Silicon-architectures.txt
+          lipo "$binary" -verify_arch arm64
+          codesign --force --deep --sign - "$plugin_path"
+          ditto -c -k --sequesterRsrc --keepParent "$plugin_path" QQEasyTool-macOS-Apple-Silicon-0.99.zip
+
+      - name: Upload Apple Silicon VST3
+        uses: actions/upload-artifact@v7
+        with:
+          name: QQEasyTool-macOS-Apple-Silicon-0.99
+          path: |
+            QQEasyTool-macOS-Apple-Silicon-0.99.zip
+            QQEasyTool-macOS-Apple-Silicon-architectures.txt
+          if-no-files-found: error
+
+  macos-intel:
+    name: macOS Intel x86_64 VST3
+    runs-on: macos-15-intel
+    steps:
+      - name: Checkout source and ARA SDK
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Configure Intel build
+        run: |
+          cmake -S . -B build-macos-intel -G Xcode \
+            -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DQQDEBREATH_COPY_AFTER_BUILD=OFF
+
+      - name: Build VST3
+        run: cmake --build build-macos-intel --config Release --target QQEasyTool_VST3 --parallel 3
+
+      - name: Verify, sign, and package
+        shell: bash
+        run: |
+          set -euo pipefail
+          plugin_path="$(find build-macos-intel -type d -name QQEasyTool.vst3 -path '*Release*' | head -n 1)"
+          test -n "$plugin_path"
+          binary="$plugin_path/Contents/MacOS/QQEasyTool"
+          lipo -archs "$binary" | tee QQEasyTool-macOS-Intel-architectures.txt
+          lipo "$binary" -verify_arch x86_64
+          codesign --force --deep --sign - "$plugin_path"
+          ditto -c -k --sequesterRsrc --keepParent "$plugin_path" QQEasyTool-macOS-Intel-0.99.zip
+
+      - name: Upload Intel VST3
+        uses: actions/upload-artifact@v7
+        with:
+          name: QQEasyTool-macOS-Intel-0.99
+          path: |
+            QQEasyTool-macOS-Intel-0.99.zip
+            QQEasyTool-macOS-Intel-architectures.txt
+          if-no-files-found: error
+
+  macos-au-universal:
+    name: macOS Universal 2 AU/ARA
+    runs-on: macos-15
+    steps:
+      - name: Checkout source and ARA SDK
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Configure Universal 2 build
+        run: |
+          cmake -S . -B build-macos-au -G Xcode \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
+            -DQQDEBREATH_COPY_AFTER_BUILD=OFF
+
+      - name: Build AU
+        run: cmake --build build-macos-au --config Release --target QQEasyTool_AU --parallel 3
+
+      - name: Verify, ad-hoc sign, and package AU
+        shell: bash
+        run: |
+          set -euo pipefail
+          plugin_path="$(find build-macos-au -type d -name QQEasyTool.component -path '*Release*' | head -n 1)"
+          test -n "$plugin_path"
+          binary="$plugin_path/Contents/MacOS/QQEasyTool"
+          lipo -archs "$binary" | tee QQEasyTool-macOS-AU-Universal-architectures.txt
+          lipo "$binary" -verify_arch arm64 x86_64
+          codesign --force --deep --sign - "$plugin_path"
+          codesign --verify --deep --strict --verbose=2 "$plugin_path"
+          ditto -c -k --sequesterRsrc --keepParent "$plugin_path" QQEasyTool-macOS-AU-Universal-0.99.zip
+          cp docs/QQEasyTool-macOS-0.99-INSTALL.txt .
+
+      - name: Upload Universal AU
+        uses: actions/upload-artifact@v7
+        with:
+          name: QQEasyTool-macOS-AU-Universal-0.99
+          path: |
+            QQEasyTool-macOS-AU-Universal-0.99.zip
+            QQEasyTool-macOS-AU-Universal-architectures.txt
+            QQEasyTool-macOS-0.99-INSTALL.txt
+          if-no-files-found: error
+
+  windows-x64:
+    name: Windows x64 VST3
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source and ARA SDK
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Configure
+        run: cmake -S . -B build-windows -A x64 -DQQDEBREATH_COPY_AFTER_BUILD=OFF
+
+      - name: Build VST3
+        run: cmake --build build-windows --config Release --target QQEasyTool_VST3 --parallel
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $plugin = Get-ChildItem -Path build-windows -Directory -Recurse -Filter QQEasyTool.vst3 |
+            Where-Object { $_.FullName -match 'Release' } |
+            Select-Object -First 1
+          if ($null -eq $plugin) { throw 'QQEasyTool.vst3 was not produced.' }
+          Compress-Archive -LiteralPath $plugin.FullName -DestinationPath QQEasyTool-Windows-x64-0.99.zip
+
+      - name: Upload Windows VST3
+        uses: actions/upload-artifact@v7
+        with:
+          name: QQEasyTool-Windows-x64-0.99
+          path: QQEasyTool-Windows-x64-0.99.zip
+          if-no-files-found: error
