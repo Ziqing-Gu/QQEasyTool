@@ -44,7 +44,7 @@ QQEasyTool 是在 [QQDeBreathTool 的 ARA-VST3-AU 版本](https://github.com/Ziq
 
 相较于 QQDeBreathTool，目前 QQEasyTool 的主要扩展是增加 `Others` 区域。用户可以把喷麦、特殊噪声或任何需要单独处理的声音标记为 Others，并为每个 Others 区域独立设置 EQ 和 Gain。
 
-当前版本为 `1.0`，仍处于测试阶段。现阶段 Analyze 只自动检测 Breath；齿音（Sibilance）的自动检测和处理尚未包含在当前版本中。未来希望加入自动检测和处理齿音的能力，只是目前还没有足够的时间继续开发这部分功能。
+当前版本为 `0.98`，仍处于测试阶段。现阶段 Analyze 只自动检测 Breath；齿音（Sibilance）的自动检测和处理尚未包含在当前版本中。未来希望加入自动检测和处理齿音的能力，只是目前还没有足够的时间继续开发这部分功能。
 
 ### 当前功能
 
