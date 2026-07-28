@@ -4,11 +4,77 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
+#include <thread>
+
+class QQEasyToolMonitorRoutingProbe
+{
+public:
+    static void configurePreview(QQDeBreathAudioProcessor& processor, const juce::String& regionType)
+    {
+        {
+            const juce::ScopedLock lock(processor.recordedBufferLock);
+            processor.recordedBuffer.setSize(2, 512);
+            for (auto channel = 0; channel < processor.recordedBuffer.getNumChannels(); ++channel)
+                juce::FloatVectorOperations::fill(processor.recordedBuffer.getWritePointer(channel), 0.5f, 512);
+            processor.recordedLengthSamples = 512;
+            processor.recordedSampleRate = 48000.0;
+            processor.recordingStartTimelineSeconds = 0.0;
+        }
+
+        QQDeBreathBridgeAnalysisResult result;
+        result.hasResult = true;
+        result.succeeded = true;
+        result.sampleRate = 48000;
+        result.channels = 2;
+        result.numSamples = 512;
+        result.durationSeconds = 512.0 / 48000.0;
+        QQDeBreathBridgeRegion region;
+        region.type = regionType;
+        region.startSample = 0;
+        region.endSample = 512;
+        region.startTime = 0.0;
+        region.endTime = result.durationSeconds;
+        result.regions.add(region);
+        result.breathCount = regionType.equalsIgnoreCase("Breath") ? 1 : 0;
+        result.noizeCount = regionType.equalsIgnoreCase("Noise") ? 1 : 0;
+        result.othersCount = regionType.equalsIgnoreCase("Others") ? 1 : 0;
+        processor.setAnalysisResult(result);
+        juce::Array<double> peaks;
+        peaks.add(0.5);
+        processor.setAnalysisRegionPeakCache(peaks);
+        processor.recordedPreviewReady.store(true, std::memory_order_release);
+        processor.analysisPreviewReady.store(true, std::memory_order_release);
+        processor.clearInternalPreviewPosition();
+    }
+
+    static juce::CriticalSection& recordedLock(QQDeBreathAudioProcessor& processor)
+    {
+        return processor.recordedBufferLock;
+    }
+
+    static juce::CriticalSection& analysisLock(QQDeBreathAudioProcessor& processor)
+    {
+        return processor.analysisLock;
+    }
+};
 
 namespace
 {
 constexpr double sampleRate = 48000.0;
 constexpr int blockSize = 4096;
+
+class PlayingTestPlayHead final : public juce::AudioPlayHead
+{
+public:
+    juce::Optional<PositionInfo> getPosition() const override
+    {
+        PositionInfo position;
+        position.setIsPlaying(true);
+        position.setTimeInSamples(0);
+        position.setTimeInSeconds(0.0);
+        return position;
+    }
+};
 
 void setParameter(QQDeBreathAudioProcessor& processor, const char* id, float value)
 {
@@ -140,6 +206,93 @@ void requireTrue(const char* name, bool condition)
     }
     std::cout << name << " ok\n";
 }
+
+float renderOrdinaryPreviewMagnitude(QQDeBreathAudioProcessor& processor)
+{
+    juce::AudioBuffer<float> buffer(2, 128);
+    fill(buffer, 0.75f);
+    juce::MidiBuffer midi;
+    processor.processBlock(buffer, midi);
+    return static_cast<float>(peakAbsolute(buffer));
+}
+
+bool runOrdinaryMonitorRoutingProbe()
+{
+    QQDeBreathAudioProcessor processor;
+    PlayingTestPlayHead playHead;
+    processor.setPlayHead(&playHead);
+    processor.prepareToPlay(sampleRate, 128);
+    setParameter(processor, QQDeBreath::ParamIDs::bypass, 0.0f);
+    setParameter(processor, QQDeBreath::ParamIDs::enableFade, 0.0f);
+    setParameter(processor, QQDeBreath::ParamIDs::normalizeBreath, 0.0f);
+    setParameter(processor, QQDeBreath::ParamIDs::breathGainDb, 0.0f);
+    setParameter(processor, QQDeBreath::ParamIDs::monitorVoice, 0.0f);
+    setParameter(processor, QQDeBreath::ParamIDs::monitorBreath, 0.0f);
+    setParameter(processor, QQDeBreath::ParamIDs::monitorNoize, 0.0f);
+    setParameter(processor, QQDeBreath::ParamIDs::monitorOthers, 0.0f);
+
+    QQEasyToolMonitorRoutingProbe::configurePreview(processor, "Breath");
+    const auto breathOff = renderOrdinaryPreviewMagnitude(processor);
+    setParameter(processor, QQDeBreath::ParamIDs::monitorBreath, 1.0f);
+    const auto breathOn = renderOrdinaryPreviewMagnitude(processor);
+
+    setParameter(processor, QQDeBreath::ParamIDs::monitorBreath, 0.0f);
+    QQEasyToolMonitorRoutingProbe::configurePreview(processor, "Noise");
+    const auto noiseOff = renderOrdinaryPreviewMagnitude(processor);
+    setParameter(processor, QQDeBreath::ParamIDs::monitorNoize, 1.0f);
+    const auto noiseOn = renderOrdinaryPreviewMagnitude(processor);
+
+    setParameter(processor, QQDeBreath::ParamIDs::monitorNoize, 0.0f);
+    QQEasyToolMonitorRoutingProbe::configurePreview(processor, "Others");
+    const auto othersOff = renderOrdinaryPreviewMagnitude(processor);
+    setParameter(processor, QQDeBreath::ParamIDs::monitorOthers, 1.0f);
+    const auto othersOn = renderOrdinaryPreviewMagnitude(processor);
+
+    setParameter(processor, QQDeBreath::ParamIDs::monitorOthers, 0.0f);
+    const auto allOff = renderOrdinaryPreviewMagnitude(processor);
+
+    const auto renderWhileLockHeld = [&](juce::CriticalSection& lockToHold)
+    {
+        juce::WaitableEvent locked;
+        juce::WaitableEvent release;
+        std::thread holder([&]
+        {
+            const juce::ScopedLock lock(lockToHold);
+            locked.signal();
+            release.wait(2000);
+        });
+        const auto acquired = locked.wait(2000);
+        const auto magnitude = acquired ? renderOrdinaryPreviewMagnitude(processor) : 1.0f;
+        release.signal();
+        holder.join();
+        return magnitude;
+    };
+
+    const auto recordingLockFallback =
+        renderWhileLockHeld(QQEasyToolMonitorRoutingProbe::recordedLock(processor));
+    const auto analysisLockFallback =
+        renderWhileLockHeld(QQEasyToolMonitorRoutingProbe::analysisLock(processor));
+    processor.setPlayHead(nullptr);
+
+    const auto passed = breathOff < 1.0e-6f
+                     && breathOn > 0.1f
+                     && noiseOff < 1.0e-6f
+                     && noiseOn > 0.1f
+                     && othersOff < 1.0e-6f
+                     && othersOn > 0.1f
+                     && allOff < 1.0e-6f
+                     && recordingLockFallback < 1.0e-6f
+                     && analysisLockFallback < 1.0e-6f;
+    if (! passed)
+        std::cerr << "Monitor routing failed:"
+                  << " breathOff=" << breathOff << " breathOn=" << breathOn
+                  << " noiseOff=" << noiseOff << " noiseOn=" << noiseOn
+                  << " othersOff=" << othersOff << " othersOn=" << othersOn
+                  << " allOff=" << allOff
+                  << " recordingLock=" << recordingLockFallback
+                  << " analysisLock=" << analysisLockFallback << '\n';
+    return passed;
+}
 }
 
 int main()
@@ -225,6 +378,16 @@ int main()
     // Keep the editor-recreation regression fixture isolated from the existing
     // audio-routing checks below.
     processor.setBreathEqState({});
+
+    requireTrue("Ordinary VST3 monitor routing and lock fallback",
+                runOrdinaryMonitorRoutingProbe());
+
+    QQDeBreathAudioProcessor secondProcessor;
+    setParameter(processor, QQDeBreath::ParamIDs::monitorOthers, 0.0f);
+    setParameter(secondProcessor, QQDeBreath::ParamIDs::monitorOthers, 1.0f);
+    requireTrue("Plugin instance monitor isolation",
+                processor.parameters.getRawParameterValue(QQDeBreath::ParamIDs::monitorOthers)->load() < 0.5f
+                && secondProcessor.parameters.getRawParameterValue(QQDeBreath::ParamIDs::monitorOthers)->load() >= 0.5f);
 
     processor.prepareToPlay(sampleRate, blockSize);
 
@@ -367,6 +530,6 @@ int main()
                   "Others");
 
     processor.releaseResources();
-    std::cout << "All QQEasyTool 0.99 route checks passed.\n";
+    std::cout << "All QQEasyTool 1.0 route checks passed.\n";
     return 0;
 }

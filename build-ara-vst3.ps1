@@ -45,7 +45,7 @@ $build = @(
 Write-Host "Plugin root: $root"
 Write-Host "ARA SDK: $ara"
 Write-Host "Build dir: $buildDir"
-Write-Host "Configuring QQEasyTool 0.99 ARA-capable VST3..."
+Write-Host "Configuring QQEasyTool 1.0 ARA-capable VST3..."
 cmd /c $configure
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE

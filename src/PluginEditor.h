@@ -182,6 +182,7 @@ private:
     void updateAraRuntimeState();
     void updateAraRuntimeMappedSourceStates(const QQDeBreathBridgeAnalysisResult& result);
     void restoreAraStateIfNeeded();
+    QQDeBreathARAPlaybackParams buildAraPlaybackParams() const;
     void syncAraPlaybackParams();
     double getHostTimeSeconds() const;
     void updatePlayheadFromHost(const QQDeBreathAudioProcessor::RecordedBufferInfo& info);

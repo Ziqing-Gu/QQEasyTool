@@ -2,6 +2,24 @@
 
 [中文](#中文) | [English](#english)
 
+## 1.0 更新 / What's new in 1.0
+
+### 中文
+
+- **监听通道隔离：** 修复关闭 Voice、Breath、Noise 或 Others 监听后，在特定实时锁竞争情况下仍可能漏出未处理声音的问题。
+- **多实例状态隔离：** 每个 QQEasyTool 插件实例使用自己的监听状态，互不影响。
+- **多轨 ARA 绑定：** 每个插件实例只显示和处理分配给自己的 ARA 播放区域，不再回退到工程中的第一个音源。
+- **每音源处理状态：** Breath Norm、Target、全局 Gain、全局 EQ、区域 Gain/EQ 和监听设置会跟随对应 ARA 音源保存与恢复。
+- **回归验证：** 继续验证 UI 关闭/重开、Breath/Noise/Others 监听、Norm、Gain、全局 EQ、区域 EQ 和区域类型记忆。
+
+### English
+
+- **Monitor-channel isolation:** Fixed a real-time lock-contention path that could leak unprocessed audio after Voice, Breath, Noise, or Others monitoring was disabled.
+- **Per-instance isolation:** Each QQEasyTool instance now keeps independent monitoring state.
+- **Multi-track ARA binding:** Each plug-in instance displays and processes only its assigned ARA playback regions instead of falling back to the first source in the project.
+- **Per-source processing state:** Breath Norm, Target, global Gain, global EQ, region Gain/EQ, and monitor settings are stored and restored with the corresponding ARA source.
+- **Regression coverage:** Retained checks for editor recreation, Breath/Noise/Others monitoring, Norm, Gain, global EQ, region EQ, and remembered region types.
+
 ## 0.99 更新 / What's new in 0.99
 
 ### 中文
@@ -26,7 +44,7 @@ QQEasyTool 是在 [QQDeBreathTool 的 ARA-VST3-AU 版本](https://github.com/Ziq
 
 相较于 QQDeBreathTool，目前 QQEasyTool 的主要扩展是增加 `Others` 区域。用户可以把喷麦、特殊噪声或任何需要单独处理的声音标记为 Others，并为每个 Others 区域独立设置 EQ 和 Gain。
 
-当前版本为 `0.99`，仍处于测试阶段。现阶段 Analyze 只自动检测 Breath；齿音（Sibilance）的自动检测和处理尚未包含在当前版本中。未来希望加入自动检测和处理齿音的能力，只是目前还没有足够的时间继续开发这部分功能。
+当前版本为 `1.0`，仍处于测试阶段。现阶段 Analyze 只自动检测 Breath；齿音（Sibilance）的自动检测和处理尚未包含在当前版本中。未来希望加入自动检测和处理齿音的能力，只是目前还没有足够的时间继续开发这部分功能。
 
 ### 当前功能
 
@@ -103,7 +121,7 @@ QQEasyTool is an experimental audio editing plug-in built on the [ARA-VST3-AU ed
 
 Compared with QQDeBreathTool, the main extension currently provided by QQEasyTool is the `Others` region type. Users can mark plosives, unusual noises, or any sound requiring special treatment as Others, then apply independent EQ and Gain to each Others region.
 
-The current version is `0.99` and remains in testing. Analyze currently detects Breath only. Automatic sibilance detection and processing are not included in the current version. The long-term goal is to add automatic sibilance detection and treatment, but there has not yet been enough development time to complete that feature.
+The current version is `1.0` and remains in testing. Analyze currently detects Breath only. Automatic sibilance detection and processing are not included in the current version. The long-term goal is to add automatic sibilance detection and treatment, but there has not yet been enough development time to complete that feature.
 
 ### Current Features
 
