@@ -17,6 +17,9 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
     bool keyPressed(const juce::KeyPress& key) override;
+    void parentHierarchyChanged() override;
+    void visibilityChanged() override;
+    void setScaleFactor(float newScaleFactor) override;
 
 private:
     enum class SourceMode
@@ -173,6 +176,8 @@ private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
 
     void timerCallback() override;
+    void scheduleInitialHostLayoutSync();
+    void performInitialHostLayoutSync();
     void updateRecordingInfo();
     bool isAraContext() const;
     void updateContextUi();
@@ -349,10 +354,12 @@ private:
     bool pendingWaveformRefreshShouldPersist = false;
     bool pendingSpectrumRefresh = false;
     bool pendingAraRuntimeUpdate = false;
+    bool initialHostLayoutSyncPending = false;
     bool attemptedGlobalDefaultsLoad = false;
     uint32_t pendingWaveformRefreshMs = 0;
     uint32_t pendingSpectrumRefreshMs = 0;
     uint32_t pendingAraRuntimeUpdateMs = 0;
+    int initialHostLayoutSyncAttempts = 0;
     int selectedRegionIndex = -1;
     int breathDetailSnapshotIndex = -1;
     double breathDetailSnapshotGainDb = 0.0;

@@ -1,3 +1,34 @@
+## 1.02 Update / What's new in 1.02 - 2026-08-03
+
+### 中文
+
+- 修复部分 Fender Studio / Studio One 环境下 macOS ARA 首次打开时界面只显示左侧、需要拖动宿主窗口才恢复的问题。
+- 在 ARA 层级挂接、首次显示和宿主缩放比例传递后，增加了有界的延迟布局同步。
+- 音频处理、分析、监听、EQ、Gain、区域编辑和工程状态行为保持不变。
+
+- **厂商标识保持为 Qing Audio：** 延续此前的统一厂商名称，并保留稳定的插件身份码。
+
+- **Manufacturer identity:** The plug-in remains published as Qing Audio with stable plug-in identity codes.
+
+### English
+
+- Fixed the first-open macOS ARA layout handshake on some Fender Studio / Studio One environments.
+- Added bounded deferred synchronization after ARA hierarchy attachment, first visibility, and host scale-factor delivery.
+- Kept audio processing, analysis, monitoring, EQ, Gain, region editing, and project-state behavior unchanged.
+# QQEasyTool Changelog / Update Record
+
+## 1.01 Update / What's new in 1.01
+
+### Chinese
+
+- Unified the displayed plug-in manufacturer name as Qing Audio.
+- Updated the plug-in version display and build metadata while preserving stable plug-in identity codes.
+
+### English
+
+- Unified the displayed plug-in manufacturer name as Qing Audio.
+- Updated the plug-in version display and build metadata while preserving stable plug-in identity codes.
+
 # QQEasyTool Changelog / 更新记录
 
 ## 1.0 更新 / What's new in 1.0 — 2026-07-28
