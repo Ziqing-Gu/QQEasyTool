@@ -3,7 +3,7 @@
 [中文](#中文) | [English](#english)
 当前版本 / Current version: **1.03**
 
-## 1.03 更新 / What''s new in 1.03
+## 1.03 更新 / What's new in 1.03
 
 ### 中文
 
