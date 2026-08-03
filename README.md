@@ -1,8 +1,23 @@
 # QQEasyTool
 
 [中文](#中文) | [English](#english)
-当前版本 / Current version: **1.02**
+当前版本 / Current version: **1.03**
 
+## 1.03 更新 / What''s new in 1.03
+
+### 中文
+
+- **修复 ARA 工程重开后的爆音/噼啪声：** 工程状态恢复后，音频源由后台线程预加载到不可变缓存。
+- **禁止实时音频线程直接读取 ARA 音源：** 缓存准备完成前只输出静音，避免在播放回调中发生宿主音频读取、锁竞争和磁盘/解码操作。
+- **适配多音源和已保存工程状态：** 恢复的每个 ARA source 都会按 fingerprint 独立缓存，缓存完成后再安全进入实时渲染。
+- **版本说明：** 未改变 Breath、Noise、Others、监听、EQ、Gain 或分析规则。
+
+### English
+
+- **Fixed crackle after reopening an ARA project:** Restored ARA sources are now preloaded by a background worker into immutable audio caches.
+- **Removed realtime ARA source reads:** The audio callback never reads host source data, waits for a reader, or performs large source I/O. It outputs silence until the cache is ready.
+- **Supports restored multi-source state:** Each restored ARA source is cached independently by fingerprint before safe realtime rendering.
+- **Behavior preserved:** Breath, Noise, Others, monitoring, EQ, Gain, and analysis rules were not changed.
 ## 1.02 更新 / What's new in 1.02
 
 ### 中文
@@ -63,7 +78,7 @@ QQEasyTool 是在 [QQDeBreathTool 的 ARA-VST3-AU 版本](https://github.com/Ziq
 
 相较于 QQDeBreathTool，目前 QQEasyTool 的主要扩展是增加 `Others` 区域。用户可以把喷麦、特殊噪声或任何需要单独处理的声音标记为 Others，并为每个 Others 区域独立设置 EQ 和 Gain。
 
-当前版本为 `1.02`，仍处于测试阶段。现阶段 Analyze 只自动检测 Breath；齿音（Sibilance）的自动检测和处理尚未包含在当前版本中。未来希望加入自动检测和处理齿音的能力，只是目前还没有足够的时间继续开发这部分功能。
+当前版本为 `1.03`，仍处于测试阶段。现阶段 Analyze 只自动检测 Breath；齿音（Sibilance）的自动检测和处理尚未包含在当前版本中。未来希望加入自动检测和处理齿音的能力，只是目前还没有足够的时间继续开发这部分功能。
 
 ### 当前功能
 
@@ -140,7 +155,7 @@ QQEasyTool is an experimental audio editing plug-in built on the [ARA-VST3-AU ed
 
 Compared with QQDeBreathTool, the main extension currently provided by QQEasyTool is the `Others` region type. Users can mark plosives, unusual noises, or any sound requiring special treatment as Others, then apply independent EQ and Gain to each Others region.
 
-The current version is `1.02` and remains in testing. Analyze currently detects Breath only. Automatic sibilance detection and processing are not included in the current version. The long-term goal is to add automatic sibilance detection and treatment, but there has not yet been enough development time to complete that feature.
+The current version is `1.03` and remains in testing. Analyze currently detects Breath only. Automatic sibilance detection and processing are not included in the current version. The long-term goal is to add automatic sibilance detection and treatment, but there has not yet been enough development time to complete that feature.
 
 ### Current Features
 

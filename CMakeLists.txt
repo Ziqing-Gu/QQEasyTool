@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(QQEasyTool VERSION 1.0.2 LANGUAGES CXX)
+project(QQEasyTool VERSION 1.0.3 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,7 +10,7 @@ option(QQDEBREATH_COPY_AFTER_BUILD "Copy built VST3 to the user common VST3 fold
 option(QQDEBREATH_FETCH_JUCE "Download JUCE with CMake FetchContent" ON)
 set(QQDEBREATH_JUCE_PATH "" CACHE PATH "Path to a local JUCE checkout when QQDEBREATH_FETCH_JUCE is OFF")
 set(QQDEBREATH_ARA_SDK_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/ARA_SDK" CACHE PATH "Path to the ARA SDK umbrella directory")
-set(QQDEBREATH_TOOL_EXE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dist/QQDeBreathTool/QQDeBreathTool.exe" CACHE FILEPATH "Optional QQDeBreathTool exe for bridge debugging. ARA 1.02 uses native C++ analysis by default.")
+set(QQDEBREATH_TOOL_EXE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dist/QQDeBreathTool/QQDeBreathTool.exe" CACHE FILEPATH "Optional QQDeBreathTool exe for bridge debugging. ARA 1.03 uses native C++ analysis by default.")
 set(QQDEBREATH_BRIDGE_EXE_PATH "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/qq_debreath_bridge.exe")
 
 set(QQDEBREATH_JUCE_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/JUCE")

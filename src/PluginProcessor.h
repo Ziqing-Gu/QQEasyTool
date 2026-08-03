@@ -3,6 +3,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -230,6 +231,8 @@ class QQDeBreathARADocumentController final : public juce::ARADocumentController
 public:
     using juce::ARADocumentControllerSpecialisation::ARADocumentControllerSpecialisation;
 
+    ~QQDeBreathARADocumentController() override;
+
     void upsertPersistentState(const QQDeBreathARASourceInfo& sourceInfo,
                                const QQDeBreathBridgeAnalysisResult& analysisResult,
                                const QQDeBreathARAPlaybackParams& playbackParams,
@@ -260,6 +263,7 @@ public:
     std::uint64_t getPlaybackParamsRevision() const noexcept { return playbackParamsRevision.load(std::memory_order_acquire); }
     std::uint64_t getSourceAudioCacheRevision() const noexcept { return sourceAudioCacheRevision.load(std::memory_order_acquire); }
     bool hasRestoredPlaybackParams() const noexcept { return restoredPlaybackParams.load(std::memory_order_acquire); }
+    void requestSourceAudioCacheWarmup();
 
 protected:
     juce::ARAPlaybackRenderer* doCreatePlaybackRenderer() override;
@@ -273,6 +277,8 @@ private:
         double sampleRate = 0.0;
         QQDeBreathARASourceAudioBuffer audio;
     };
+    class CacheWarmupThread;
+    bool warmSourceAudioCaches(const std::function<bool()>& shouldExit);
 
     mutable juce::CriticalSection persistentStateLock;
     juce::Array<QQDeBreathARAPersistentState> persistentStates;
@@ -284,4 +290,6 @@ private:
     std::atomic<std::uint64_t> playbackParamsRevision { 1 };
     std::atomic<std::uint64_t> sourceAudioCacheRevision { 1 };
     std::atomic<bool> restoredPlaybackParams { false };
+    juce::CriticalSection cacheWarmupThreadLock;
+    std::unique_ptr<CacheWarmupThread> cacheWarmupThread;
 };
