@@ -1,4 +1,4 @@
-Stable / 用户验收通过 — 2026-09-20
+Stable / 用户指定稳定版 — 2026-09-20
 
 QQEasyTool 1.04 - Windows / macOS VST3 / AU installation and usage guide
 ==========================================================================
@@ -102,3 +102,18 @@ Only run these commands for archives downloaded from the official QQEasyTool Git
 - Repeated stopped callbacks, a different startup timestamp, zero-length blocks, and audio-engine preparation do not consume the pending selection.
 - Subsequent DAW seeks still cancel audition offsets and internal loops. A new host-reported stopped position cancels the pending selection before playback.
 - The ordinary VST3 editor reads a published audio-thread transport snapshot instead of querying the host playhead from the UI thread. ARA, analysis, monitoring, and EQ processing retain their existing behavior.
+
+LICENSE / 许可与源码
+===================
+禁止商业使用 / NO COMMERCIAL USE.
+Qing Audio Non-Commercial Source-Share License 1.0.
+Complete LICENSE and third-party notices are included inside each archive.
+每个安装压缩包内保留完整许可证与第三方声明。
+Based on QQEasyTool by Qing Audio / Ziqing Gu.
+Original source: https://github.com/Ziqing-Gu/QQEasyTool
+Modified by: Codex at the user's request.
+Modification date: 2026-09-20; ordinary VST3 waveform audition and DAW seek alignment.
+Complete corresponding source / 完整对应源码：
+https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-1.04-Complete-Source.zip
+Windows transport tests passed; macOS packages receive CI build/architecture/signature checks.
+本次改动为普通 VST3 播放同步；未宣称完成新的 macOS 或 ARA 宿主实机验收。
