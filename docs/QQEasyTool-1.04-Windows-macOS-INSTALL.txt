@@ -1,0 +1,104 @@
+Stable / 用户验收通过 — 2026-09-20
+
+QQEasyTool 1.04 - Windows / macOS VST3 / AU installation and usage guide
+==========================================================================
+
+PACKAGE CHOICE
+--------------
+
+1. QQEasyTool-macOS-Apple-Silicon-1.04.zip
+   VST3 for Apple Silicon Macs (M1/M2/M3/M4 and later).
+
+2. QQEasyTool-macOS-Intel-1.04.zip
+   VST3 for Intel Macs.
+
+3. QQEasyTool-macOS-AU-Universal-1.04.zip
+   Universal 2 Audio Unit for Logic Pro. It contains arm64 and x86_64.
+
+4. QQEasyTool-Windows-x64-1.04.zip
+   VST3 for 64-bit Windows hosts.
+
+SYSTEM REQUIREMENTS
+-------------------
+
+- macOS 11 or later.
+- A compatible 64-bit DAW.
+- These free builds are ad-hoc signed, not Developer ID signed or notarized.
+- Windows 10 or Windows 11 x64 for the Windows VST3 build.
+- A 64-bit VST3-compatible Windows DAW.
+
+INSTALL LOCATIONS
+-----------------
+
+Windows VST3:
+1. Close the DAW.
+2. Extract QQEasyTool-Windows-x64-1.04.zip.
+3. Copy the complete QQEasyTool.vst3 folder to:
+     C:\Program Files\Common Files\VST3\
+4. Replace the old QQEasyTool.vst3 folder if one is already installed.
+5. Restart the DAW and rescan or reactivate QQEasyTool in the plug-in manager.
+
+If Windows marks the downloaded ZIP as blocked, right-click the ZIP, open
+Properties, select Unblock, click Apply, and then extract it again.
+
+macOS VST3:
+Copy QQEasyTool.vst3 to:
+  /Library/Audio/Plug-Ins/VST3/
+
+Copy QQEasyTool.component to:
+  /Library/Audio/Plug-Ins/Components/
+
+Restart the DAW and rescan plug-ins after installation or replacement.
+
+USAGE
+-----
+
+ARA in Cubase/Nuendo:
+1. Add QQEasyTool as an Audio Extension to the selected audio event.
+2. Open QQEasyTool and click Load.
+3. Click Analyze, edit Breath/Noise regions, monitor the required stems, and export when ready.
+
+Plain VST3 recording:
+1. Insert QQEasyTool on the vocal track.
+2. Click Record to arm it, then play the DAW timeline.
+3. Stop DAW playback to stop recording.
+4. Click Analyze and continue editing/monitoring.
+
+Logic Pro / AU / ARA 2:
+- Logic Pro does not load VST3. Install QQEasyTool.component.
+- Insert QQEasyTool in the first Audio Effect slot to use ARA mode.
+- On Apple Silicon, Apple currently requires Logic Pro to run with Rosetta for third-party ARA Audio Units. Quit Logic, open Applications, select Logic Pro, choose Get Info, enable Open using Rosetta, then reopen Logic.
+
+FIRST-LAUNCH SECURITY NOTICE
+----------------------------
+
+If macOS blocks QQEasyTool during the first scan:
+1. Trigger one plug-in scan in the DAW.
+2. Open System Settings > Privacy & Security.
+3. Find the QQEasyTool warning and click Open Anyway.
+4. Enter the Mac login password and confirm.
+5. Restart the DAW and rescan/reactivate QQEasyTool.
+
+Trusted-source fallback commands:
+
+  sudo xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3"
+  sudo xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/Components/QQEasyTool.component"
+
+Only run these commands for archives downloaded from the official QQEasyTool GitHub repository.
+
+
+## 1.04 更新 / What's new in 1.04
+
+### 中文
+
+- 修复“停止时点击插件波形，按播放却回到 DAW 位置”的问题。所选音频位置保持为待播放状态，在第一个实际播放音频块建立时间对应关系，从点击处开始播放。
+- 停止期间重复的音频回调、启动时的宿主时间变化、零长度处理块和音频引擎重新准备不会吞掉待播放选择。
+- 后续 DAW 定位跳变仍取消内部试听偏移和内部循环，恢复原始工程时间线；停止时宿主报告的新定位也会取消待播放选择。
+- 普通 VST3 界面使用音频线程发布的位置快照，避免在界面线程直接读取宿主播放时钟。ARA、分析、监听及 EQ 处理保持原有行为。
+
+### English
+
+- Fixed a stopped waveform selection being lost when Play starts. The selected local sample remains pending until the first rendered playing block, where it is anchored to the actual host clock.
+- Repeated stopped callbacks, a different startup timestamp, zero-length blocks, and audio-engine preparation do not consume the pending selection.
+- Subsequent DAW seeks still cancel audition offsets and internal loops. A new host-reported stopped position cancels the pending selection before playback.
+- The ordinary VST3 editor reads a published audio-thread transport snapshot instead of querying the host playhead from the UI thread. ARA, analysis, monitoring, and EQ processing retain their existing behavior.

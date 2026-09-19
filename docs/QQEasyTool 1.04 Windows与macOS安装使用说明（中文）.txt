@@ -1,0 +1,55 @@
+Stable / 用户验收通过 — 2026-09-20
+
+QQEasyTool 1.04 Windows 与 macOS 安装使用说明
+==============================================
+
+一、Windows VST3 安装
+
+1. 完全关闭 Cubase、Nuendo、REAPER、Studio One 或其他 DAW。
+2. 将 QQEasyTool.vst3 文件夹复制到：
+   C:\Program Files\Common Files\VST3\
+3. 重新打开 DAW，并在插件管理器中重新扫描或重新激活 QQEasyTool。
+
+二、macOS VST3 安装
+
+将 QQEasyTool.vst3 复制到：
+
+/Library/Audio/Plug-Ins/VST3/
+
+三、macOS AU / ARA 安装
+
+将 QQEasyTool.component 复制到：
+
+/Library/Audio/Plug-Ins/Components/
+
+Logic Pro 不加载 VST3。使用 AU / ARA 版本时，将 QQEasyTool 放入第一个 Audio Effect 插槽。
+
+四、首次启动安全提示
+
+如果 macOS 阻止插件，请打开“系统设置 -> 隐私与安全性”，找到 QQEasyTool 的提示并点击“仍要打开”，然后重新扫描插件。
+
+五、ARA 工程重开说明
+
+1. 关闭工程并重新打开后，插件会自动在后台准备当前工程的 ARA 音频缓存。
+2. 不需要再次打开或重新进入 ARA 界面来修复播放声音。
+3. 缓存准备完成前可能短暂没有声音；准备完成后会自动恢复播放。
+4. 分析、区域、监听、Fade、Norm、Gain、EQ 和三轨导出逻辑没有改变。
+
+版本：1.04
+日期：2026-09-19
+
+## 1.04 更新 / What's new in 1.04
+
+### 中文
+
+- 修复“停止时点击插件波形，按播放却回到 DAW 位置”的问题。所选音频位置保持为待播放状态，在第一个实际播放音频块建立时间对应关系，从点击处开始播放。
+- 停止期间重复的音频回调、启动时的宿主时间变化、零长度处理块和音频引擎重新准备不会吞掉待播放选择。
+- 后续 DAW 定位跳变仍取消内部试听偏移和内部循环，恢复原始工程时间线；停止时宿主报告的新定位也会取消待播放选择。
+- 普通 VST3 界面使用音频线程发布的位置快照，避免在界面线程直接读取宿主播放时钟。ARA、分析、监听及 EQ 处理保持原有行为。
+
+### English
+
+- Fixed a stopped waveform selection being lost when Play starts. The selected local sample remains pending until the first rendered playing block, where it is anchored to the actual host clock.
+- Repeated stopped callbacks, a different startup timestamp, zero-length blocks, and audio-engine preparation do not consume the pending selection.
+- Subsequent DAW seeks still cancel audition offsets and internal loops. A new host-reported stopped position cancels the pending selection before playback.
+- The ordinary VST3 editor reads a published audio-thread transport snapshot instead of querying the host playhead from the UI thread. ARA, analysis, monitoring, and EQ processing retain their existing behavior.

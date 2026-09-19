@@ -396,7 +396,7 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
     addAndMakeVisible(titleLabel);
     titleLabel.setVisible(false);
 
-    phaseLabel.setText("QQEasyTool 1.02 | Breath Analysis | Live Region Monitor", juce::dontSendNotification);
+    phaseLabel.setText("QQEasyTool 1.04 | Breath Analysis | Live Region Monitor", juce::dontSendNotification);
     phaseLabel.setJustificationType(juce::Justification::centred);
     phaseLabel.setColour(juce::Label::textColourId, juce::Colour(0xffcbd5e1));
     phaseLabel.setFont(juce::Font(18.0f, juce::Font::plain));
@@ -3076,8 +3076,19 @@ void QQDeBreathAudioProcessorEditor::setBreathEqLoopEnabled(bool enabled)
     statusLabel.setText("Status: Internal " + getActiveGlobalTypeName() + " EQ loop: " + juce::String(localStart, 3) + " - " + juce::String(localEnd, 3) + " s.", juce::dontSendNotification);
 }
 
-double QQDeBreathAudioProcessorEditor::getHostTimeSeconds() const
+double QQDeBreathAudioProcessorEditor::getHostTimeSeconds(bool* hostIsPlaying) const
 {
+    if (hostIsPlaying != nullptr)
+        *hostIsPlaying = false;
+    if (! isAraContext())
+    {
+        double seconds = -1.0;
+        bool playing = false;
+        audioProcessor.getCachedHostPosition(seconds, playing);
+        if (hostIsPlaying != nullptr)
+            *hostIsPlaying = playing;
+        return seconds;
+    }
     auto* playHead = audioProcessor.getPlayHead();
     if (playHead == nullptr)
         return -1.0;
@@ -3085,6 +3096,9 @@ double QQDeBreathAudioProcessorEditor::getHostTimeSeconds() const
     const auto position = playHead->getPosition();
     if (! position.hasValue())
         return -1.0;
+
+    if (hostIsPlaying != nullptr)
+        *hostIsPlaying = position->getIsPlaying();
 
     if (auto timeInSamples = position->getTimeInSamples(); timeInSamples.hasValue() && audioProcessor.getSampleRate() > 0.0)
         return static_cast<double>(*timeInSamples) / audioProcessor.getSampleRate();
@@ -3097,7 +3111,14 @@ double QQDeBreathAudioProcessorEditor::getHostTimeSeconds() const
 
 void QQDeBreathAudioProcessorEditor::updatePlayheadFromHost(const QQDeBreathAudioProcessor::RecordedBufferInfo& info)
 {
-    const auto hostTimeSeconds = getHostTimeSeconds();
+    bool hostIsPlaying = false;
+    const auto hostTimeSeconds = getHostTimeSeconds(&hostIsPlaying);
+    if (! isAraContext())
+    {
+        if (! hostIsPlaying && hostTimeSeconds >= 0.0)
+            audioProcessor.syncStoppedPreviewWithHost(hostTimeSeconds);
+        breathEqLoopButton.setToggleState(audioProcessor.isInternalPreviewLoopEnabled(), juce::dontSendNotification);
+    }
     if (hostTimeSeconds >= 0.0)
     {
         if (sourceMode == SourceMode::ara && araSourceInfo.exportedWav.existsAsFile())

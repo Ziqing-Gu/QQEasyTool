@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(QQEasyTool VERSION 1.0.3 LANGUAGES CXX)
+project(QQEasyTool VERSION 1.0.4 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -190,5 +190,28 @@ if(QQEASYTOOL_BUILD_ROUTE_PROBE)
         PUBLIC
             juce::juce_recommended_config_flags
             juce::juce_recommended_warning_flags
+    )
+endif()
+
+option(QQEASYTOOL_BUILD_TRANSPORT_SYNC_PROBE "Build deterministic host transport sync probe" ON)
+if(QQEASYTOOL_BUILD_TRANSPORT_SYNC_PROBE)
+    add_executable(qq_easytool_transport_sync_probe
+        tests/TransportSyncProbe.cpp
+        "${JUCE_MODULES_DIR}/juce_audio_plugin_client/juce_audio_plugin_client_ARA.cpp"
+    )
+    target_include_directories(qq_easytool_transport_sync_probe PRIVATE src)
+    target_compile_features(qq_easytool_transport_sync_probe PRIVATE cxx_std_17)
+    target_compile_definitions(qq_easytool_transport_sync_probe PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JucePlugin_Build_VST3=1
+    )
+    if(MSVC)
+        target_compile_options(qq_easytool_transport_sync_probe PRIVATE /utf-8)
+        target_link_options(qq_easytool_transport_sync_probe PRIVATE /ENTRY:wmainCRTStartup)
+    endif()
+    target_link_libraries(qq_easytool_transport_sync_probe
+        PRIVATE QQEasyTool juce::juce_audio_utils juce::juce_dsp
+        PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags
     )
 endif()

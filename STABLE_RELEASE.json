@@ -1,0 +1,20 @@
+{
+  "product": "QQEasyTool",
+  "version": "1.04",
+  "internalVersion": "1.0.4",
+  "status": "Stable",
+  "confirmedAt": "2026-09-20T00:32:35+08:00",
+  "confirmationSource": "User requested Stable and Plan B, C, D",
+  "scope": "Ordinary VST3 transport; ARA processing unchanged; automated ARA input checks passed, no new real ARA/macOS host acceptance claimed",
+  "binaryChangedForStableMarking": false,
+  "pluginFiles": {
+    "Contents/Resources/moduleinfo.json": {
+      "bytes": 1417,
+      "sha256": "adc4e08f0c11e053541c80eb6b1c0097b161341d73e57146727a29113acef3ee"
+    },
+    "Contents/x86_64-win/QQEasyTool.vst3": {
+      "bytes": 7503872,
+      "sha256": "cad3a4025ab88528504e7a173546f9caed516f2721301a2138d342750da61c20"
+    }
+  }
+}

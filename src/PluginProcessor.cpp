@@ -1156,6 +1156,8 @@ void QQDeBreathAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
         return;
     }
 
+    resetPreviewOnHostTransportChange(hostTimeSeconds, hostIsPlaying, buffer.getNumSamples());
+
     const auto armed = recordArmed.load(std::memory_order_acquire);
     const auto wasRecording = recording.load(std::memory_order_acquire);
     recording.store(armed && hostIsPlaying, std::memory_order_release);
@@ -1784,7 +1786,11 @@ void QQDeBreathAudioProcessor::setInternalPreviewPosition(double localSeconds, d
                         : 0.0;
     internalPreviewAnchorLocalSeconds.store(juce::jlimit(0.0, juce::jmax(0.0, duration), localSeconds), std::memory_order_release);
     internalPreviewAnchorHostSeconds.store(hostTimeSeconds >= 0.0 ? hostTimeSeconds : recordingStartTimelineSeconds, std::memory_order_release);
+    // Stopped UI timestamps need not match the first playing audio block.
+    // Keep the chosen sample pending until an actual block can render it.
+    internalPreviewAwaitingPlayback.store(! audioHostIsPlaying.load(), std::memory_order_release);
     internalPreviewActive.store(true, std::memory_order_release);
+    internalPreviewRequestRevision.fetch_add(1, std::memory_order_release);
 }
 
 void QQDeBreathAudioProcessor::setInternalPreviewLoopRange(double startSeconds, double endSeconds, double hostTimeSeconds)
@@ -1808,6 +1814,7 @@ void QQDeBreathAudioProcessor::clearInternalPreviewLoop()
 void QQDeBreathAudioProcessor::clearInternalPreviewPosition()
 {
     internalPreviewActive.store(false, std::memory_order_release);
+    internalPreviewAwaitingPlayback.store(false, std::memory_order_release);
     internalPreviewLoopEnabled.store(false, std::memory_order_release);
     internalPreviewAnchorLocalSeconds.store(0.0, std::memory_order_release);
     internalPreviewAnchorHostSeconds.store(0.0, std::memory_order_release);
@@ -1815,10 +1822,130 @@ void QQDeBreathAudioProcessor::clearInternalPreviewPosition()
     internalPreviewLoopEndSeconds.store(0.0, std::memory_order_release);
 }
 
+void QQDeBreathAudioProcessor::resetPreviewOnHostTransportChange(double hostTimeSeconds,
+                                                               bool hostIsPlaying,
+                                                               int numSamples)
+{
+    const auto sampleRate = getSampleRate();
+    if (! std::isfinite(hostTimeSeconds) || hostTimeSeconds < 0.0 || sampleRate <= 0.0)
+    {
+        // Missing transport information is not evidence of a user seek.
+        if (havePreviousHostPosition && previousHostIsPlaying && sampleRate > 0.0)
+            previousHostBlockDurationSeconds += static_cast<double>(numSamples) / sampleRate;
+        return;
+    }
+
+    const auto tolerance = 1.5 / sampleRate;
+    const auto requestRevision = internalPreviewRequestRevision.load(std::memory_order_acquire);
+    if (havePreviousHostPosition)
+    {
+        auto expectedTime = previousHostTimeSeconds
+                          + (previousHostIsPlaying ? previousHostBlockDurationSeconds : 0.0);
+        auto earliestTime = expectedTime;
+        // Hosts may freeze anywhere in the last block when stopping. The play
+        // state transition itself must not cancel the user's waveform audition.
+        if (previousHostIsPlaying && ! hostIsPlaying)
+            earliestTime = previousHostTimeSeconds;
+
+        // The editor may observe a pause while the host suspends audio callbacks.
+        // Use that stopped position when the next audio block resumes.
+        const auto audioRevision = audioHostPositionRevision.load();
+        if (audioRevision != 0 && stoppedUiAudioRevision.load() == audioRevision)
+            earliestTime = expectedTime = stoppedUiHostSeconds.load();
+
+        const auto hostRelocated = hostTimeSeconds < earliestTime - tolerance
+                                || hostTimeSeconds > expectedTime + tolerance;
+        const auto newPreviewAtCurrentPosition = requestRevision != lastProcessedPreviewRequestRevision
+            && internalPreviewActive.load(std::memory_order_acquire)
+            && std::abs(internalPreviewAnchorHostSeconds.load(std::memory_order_acquire)
+                        - hostTimeSeconds) <= tolerance;
+        const auto startingSelectedAudio = hostIsPlaying
+            && internalPreviewAwaitingPlayback.load(std::memory_order_acquire)
+            && internalPreviewActive.load(std::memory_order_acquire);
+        if (hostRelocated && ! newPreviewAtCurrentPosition && ! startingSelectedAudio)
+            clearInternalPreviewPosition();
+    }
+
+    lastProcessedPreviewRequestRevision = requestRevision;
+    previousHostTimeSeconds = hostTimeSeconds;
+    previousHostBlockDurationSeconds = static_cast<double>(numSamples) / sampleRate;
+    previousHostIsPlaying = hostIsPlaying;
+    havePreviousHostPosition = true;
+
+    // Publish a coherent last-block range for stopped UI polling, without locks
+    // or retries on the audio thread. An odd revision means publication is busy.
+    audioHostPositionRevision.fetch_add(1);
+    audioHostStartSeconds.store(hostTimeSeconds);
+    audioHostEndSeconds.store(hostTimeSeconds
+                            + (hostIsPlaying ? previousHostBlockDurationSeconds : 0.0));
+    audioHostIsPlaying.store(hostIsPlaying);
+    audioHostPositionRevision.fetch_add(1);
+}
+
+bool QQDeBreathAudioProcessor::getCachedHostPosition(double& seconds, bool& isPlaying) const noexcept
+{
+    seconds = -1.0;
+    isPlaying = false;
+    for (auto attempt = 0; attempt < 2; ++attempt)
+    {
+        const auto revision = audioHostPositionRevision.load();
+        if (revision == 0 || (revision & 1u) != 0)
+            continue;
+        const auto hostSeconds = audioHostStartSeconds.load();
+        const auto playing = audioHostIsPlaying.load();
+        if (audioHostPositionRevision.load() == revision)
+        {
+            seconds = hostSeconds;
+            isPlaying = playing;
+            return true;
+        }
+    }
+    return false;
+}
+
+void QQDeBreathAudioProcessor::syncStoppedPreviewWithHost(double hostTimeSeconds)
+{
+    if (! std::isfinite(hostTimeSeconds) || hostTimeSeconds < 0.0)
+        return;
+
+    const juce::ScopedLock lock(recordedBufferLock);
+    const auto audioRevision = audioHostPositionRevision.load();
+    if ((audioRevision & 1u) != 0)
+        return;
+    auto earliestTime = audioHostStartSeconds.load();
+    auto latestTime = audioHostEndSeconds.load();
+    if (audioHostPositionRevision.load() != audioRevision)
+        return; // The next editor tick can retry the snapshot.
+
+    if (haveStoppedUiPosition && lastStoppedUiAudioRevision == audioRevision)
+        earliestTime = latestTime = lastStoppedUiHostSeconds;
+    else if (audioRevision == 0)
+        earliestTime = latestTime = internalPreviewActive.load(std::memory_order_acquire)
+            ? internalPreviewAnchorHostSeconds.load(std::memory_order_acquire) : hostTimeSeconds;
+
+    const auto tolerance = getSampleRate() > 0.0 ? 1.5 / getSampleRate() : 1.0e-6;
+    const auto requestRevision = internalPreviewRequestRevision.load(std::memory_order_acquire);
+    const auto newPreviewAtCurrentPosition = requestRevision != lastStoppedUiPreviewRequestRevision
+        && internalPreviewActive.load(std::memory_order_acquire)
+        && std::abs(internalPreviewAnchorHostSeconds.load(std::memory_order_acquire)
+                    - hostTimeSeconds) <= tolerance;
+    const auto hostRelocated = hostTimeSeconds < earliestTime - tolerance
+                            || hostTimeSeconds > latestTime + tolerance;
+    if (hostRelocated && ! newPreviewAtCurrentPosition)
+        clearInternalPreviewPosition();
+
+    haveStoppedUiPosition = true;
+    lastStoppedUiHostSeconds = hostTimeSeconds;
+    lastStoppedUiAudioRevision = audioRevision;
+    lastStoppedUiPreviewRequestRevision = requestRevision;
+    stoppedUiHostSeconds.store(hostTimeSeconds);
+    stoppedUiAudioRevision.store(audioRevision);
+}
+
 double QQDeBreathAudioProcessor::getInternalPreviewPosition(double hostTimeSeconds) const
 {
     const juce::ScopedLock lock(recordedBufferLock);
-    return getInternalPreviewPositionUnlocked(hostTimeSeconds);
+    return juce::jmax(0.0, getInternalPreviewPositionUnlocked(hostTimeSeconds));
 }
 
 void QQDeBreathAudioProcessor::appendToRecordedBuffer(const juce::AudioBuffer<float>& buffer, double hostTimeSeconds)
@@ -2244,6 +2371,14 @@ bool QQDeBreathAudioProcessor::renderPreviewBlock(juce::AudioBuffer<float>& buff
     const auto sibilanceGlobalGain = dbToGain(juce::jlimit(-60.0, 30.0, static_cast<double>(rawParam(parameters, QQDeBreath::ParamIDs::sibilanceGainDb, 0.0f))));
     const auto breathEq = getBreathEqState();
     const auto sibilanceEq = getSibilanceEqState();
+    // Both the click handler and this block hold recordedBufferLock. Bind the
+    // selected local sample to the first real playing block, not a stopped clock.
+    if (buffer.getNumSamples() > 0 && internalPreviewActive.load(std::memory_order_acquire)
+        && internalPreviewAwaitingPlayback.load(std::memory_order_acquire))
+    {
+        internalPreviewAnchorHostSeconds.store(hostTimeSeconds, std::memory_order_release);
+        internalPreviewAwaitingPlayback.store(false, std::memory_order_release);
+    }
     const auto blockStart = static_cast<juce::int64>(std::llround(getInternalPreviewPositionUnlocked(hostTimeSeconds) * recordedSampleRate));
 
     buffer.clear();
@@ -2394,7 +2529,10 @@ double QQDeBreathAudioProcessor::getInternalPreviewPositionUnlocked(double hostT
     {
         const auto anchorLocal = internalPreviewAnchorLocalSeconds.load(std::memory_order_acquire);
         const auto anchorHost = internalPreviewAnchorHostSeconds.load(std::memory_order_acquire);
-        localSeconds = anchorLocal + (hostTimeSeconds >= 0.0 && anchorHost >= 0.0 ? hostTimeSeconds - anchorHost : 0.0);
+        localSeconds = anchorLocal;
+        if (! internalPreviewAwaitingPlayback.load(std::memory_order_acquire)
+            && hostTimeSeconds >= 0.0 && anchorHost >= 0.0)
+            localSeconds += hostTimeSeconds - anchorHost;
 
         if (internalPreviewLoopEnabled.load(std::memory_order_acquire))
         {
@@ -2406,7 +2544,9 @@ double QQDeBreathAudioProcessor::getInternalPreviewPositionUnlocked(double hostT
         }
     }
 
-    return juce::jmax(0.0, localSeconds);
+    // Keep negative positions for the renderer so pre-roll is silent and a
+    // block crossing the recording origin starts at the correct sample.
+    return localSeconds;
 }
 
 juce::Array<double> QQDeBreathAudioProcessor::buildRegionPeakCacheForResult(const QQDeBreathBridgeAnalysisResult& result) const

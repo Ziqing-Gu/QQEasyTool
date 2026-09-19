@@ -1,0 +1,67 @@
+QQEasyTool 1.04 - macOS VST3 / AU installation guide
+QQEasyTool 1.04 - macOS VST3 / AU 安装说明
+====================================================
+
+PACKAGE CHOICE / 安装包选择
+---------------------------
+
+1. QQEasyTool-macOS-Apple-Silicon-1.04.zip
+   VST3 for Apple Silicon Macs (M1/M2/M3/M4 and later).
+   适用于 Apple Silicon Mac（M1/M2/M3/M4 及后续型号）的 VST3。
+
+2. QQEasyTool-macOS-Intel-1.04.zip
+   VST3 for Intel Macs.
+   适用于 Intel Mac 的 VST3。
+
+3. QQEasyTool-macOS-AU-Universal-1.04.zip
+   Universal 2 Audio Unit for Logic Pro, containing arm64 and x86_64.
+   适用于 Logic Pro 的 Universal 2 AU，同时包含 arm64 和 x86_64。
+
+INSTALL LOCATIONS / 安装位置
+----------------------------
+
+Copy QQEasyTool.vst3 to / 将 QQEasyTool.vst3 复制到：
+  /Library/Audio/Plug-Ins/VST3/
+
+Copy QQEasyTool.component to / 将 QQEasyTool.component 复制到：
+  /Library/Audio/Plug-Ins/Components/
+
+LOGIC PRO / ARA 2
+-----------------
+
+Logic Pro does not load VST3. Install QQEasyTool.component instead.
+Logic Pro 不加载 VST3，请安装 QQEasyTool.component。
+
+Insert QQEasyTool in the first Audio Effect slot to use the Logic ARA workflow.
+如需使用 Logic ARA 工作流，请把 QQEasyTool 插入第一个 Audio Effect 插槽。
+
+On Apple Silicon, third-party ARA Audio Units may require Logic Pro to run
+with Rosetta. Quit Logic, open Applications, select Logic Pro, choose Get
+Info, enable Open using Rosetta, then reopen Logic.
+
+在 Apple Silicon 上，第三方 ARA AU 可能需要 Logic Pro 使用 Rosetta 运行。
+退出 Logic，在“应用程序”中选择 Logic Pro，打开“显示简介”，勾选
+“使用 Rosetta 打开”，然后重新启动 Logic。
+
+FIRST LAUNCH / 首次启动
+-----------------------
+
+These test builds are ad-hoc signed, not Developer ID signed or notarized.
+这些测试版本仅使用 ad-hoc 签名，没有 Developer ID 签名，也没有公证。
+
+If macOS blocks the plug-in, trigger one scan, then open System Settings >
+Privacy & Security and choose Open Anyway for QQEasyTool. Restart the DAW and
+rescan afterward.
+
+如果 macOS 阻止插件，请先触发一次扫描，再打开“系统设置 > 隐私与安全性”，
+找到 QQEasyTool 并选择“仍要打开”，然后重新启动 DAW 并重新扫描。
+
+Only use security override commands for archives downloaded from the official
+QQEasyTool repository.
+只有从 QQEasyTool 官方仓库下载的安装包才应使用安全限制解除命令。
+
+HOST SUMMARY / 宿主摘要
+-----------------------
+
+Cubase / Nuendo / REAPER / Studio One: VST3
+Logic Pro:                              AU component

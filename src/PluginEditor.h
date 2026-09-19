@@ -189,7 +189,7 @@ private:
     void restoreAraStateIfNeeded();
     QQDeBreathARAPlaybackParams buildAraPlaybackParams() const;
     void syncAraPlaybackParams();
-    double getHostTimeSeconds() const;
+    double getHostTimeSeconds(bool* hostIsPlaying = nullptr) const;
     void updatePlayheadFromHost(const QQDeBreathAudioProcessor::RecordedBufferInfo& info);
     void reloadAraSource();
     juce::ARAAudioSource* findCurrentAudioSource() const;
