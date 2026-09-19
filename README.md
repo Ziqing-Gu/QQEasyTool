@@ -4,9 +4,11 @@
 
 ### 本项目源码公开，但不属于 OSI 认可的开源软件
 
-> **禁止任何商业使用。** 仅允许个人、学习、教育、研究、评估、爱好及其他非商业用途。发布原版或修改版时，必须同时免费公开完整对应源代码，保留作者、版权和许可证声明，醒目标明原项目名称、作者、来源链接、修改者、修改日期及修改内容，并使整个修改版继续采用同一许可证。完整条款见 [LICENSE](LICENSE)。
+> **禁止任何商业使用。** 仅允许个人、学习、教育、研究、评估、爱好及其他非商业用途。发布原版、二进制版或修改版时，必须同时免费公开完整对应源代码，保留作者、版权和许可证声明，醒目标明原项目名称、作者、来源链接、修改者、修改日期及修改内容，并使整个修改版继续采用同一许可证。完整条款见 [LICENSE](LICENSE)。
 >
-> **NO COMMERCIAL USE.** Use is permitted only for personal, educational, research, evaluation, hobby, charitable, and other non-commercial purposes. Any distributed original or modified version must provide the complete corresponding source without charge, preserve authorship, copyright, and license notices, prominently identify the original project, author, source URL, modifier, date, and changes, and license the entire modified work under the same terms. See [LICENSE](LICENSE).
+> **NO COMMERCIAL USE.** Use is permitted only for personal, educational, research, evaluation, hobby, charitable, and other non-commercial purposes. Any distributed original, binary, or modified version must provide the complete corresponding source without charge, preserve authorship, copyright, and license notices, prominently identify the original project, author, source URL, modifier, date, and changes, and license the entire modified work under the same terms. See [LICENSE](LICENSE).
+>
+> 许可证政策变更与后续 AI 维护说明见 [LICENSE_POLICY_CHANGE.md](LICENSE_POLICY_CHANGE.md)。 / See [LICENSE_POLICY_CHANGE.md](LICENSE_POLICY_CHANGE.md) for the policy record and future AI maintenance instructions.
 
 # QQEasyTool
 
@@ -16,9 +18,29 @@
 
 
 
-## 1.04 Stable 下载 / Downloads
+## 下载 / Downloads — 1.04 Stable
 
-[GitHub Release 1.04 Stable](https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.04) — Windows x64 VST3、macOS Apple Silicon VST3、Intel VST3、Universal 2 AU；完整对应源码与双语安装说明随发布提供。Complete corresponding source and bilingual installation guides are included.
+**[最新正式版 / Latest Release](https://github.com/Ziqing-Gu/QQEasyTool/releases/latest)** · [固定版本 / v1.04](https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.04)
+
+| 文件 / Actual release asset | 选择说明 / Use |
+|---|---|
+| [QQEasyTool-1.04-Complete-Source.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-1.04-Complete-Source.zip) | 完整对应源码，不能直接安装 / Complete source, not an installer |
+| [QQEasyTool-1.04-Windows-macOS-INSTALL-ZH-CN.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-1.04-Windows-macOS-INSTALL-ZH-CN.txt) | 中文安装与升级说明 / Chinese installation guide |
+| [QQEasyTool-1.04-Windows-macOS-INSTALL.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-1.04-Windows-macOS-INSTALL.txt) | English installation / upgrade guide / 英文安装说明 |
+| [QQEasyTool-macOS-Apple-Silicon-1.04.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-macOS-Apple-Silicon-1.04.zip) | Apple Silicon 原生宿主 / native arm64 host — VST3 |
+| [QQEasyTool-macOS-AU-Universal-1.04.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-macOS-AU-Universal-1.04.zip) | macOS Universal 2 (arm64 + x86_64) — AU / Logic Pro |
+| [QQEasyTool-macOS-Intel-1.04.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-macOS-Intel-1.04.zip) | Intel 或 Rosetta x86_64 宿主 / Intel or Rosetta host — VST3 |
+| [QQEasyTool-Windows-x64-1.04.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-Windows-x64-1.04.zip) | Windows 10/11 x64 — VST3 |
+
+Windows 用户选择 Windows x64 VST3。Mac VST3 只选匹配宿主运行架构的一包；Logic Pro 使用 AU。按需安装格式，避免重复副本。Linux 本次不提供。
+Windows users need Windows x64 VST3. Mac VST3 users should select one package matching the host's running architecture; Logic Pro uses AU. Install only required formats and avoid duplicate copies. Linux is not provided.
+
+**GitHub 自动生成的 Source code (zip) / Source code (tar.gz) 是源码快照，不是可直接安装的插件。**
+**GitHub's automatic Source code (zip) / Source code (tar.gz) archives are source snapshots, not installable plug-ins.**
+完整复现源码使用 Complete-Source.zip（含 ARA SDK 和 JUCE），安装插件则选择平台 ZIP。
+For rebuilding use Complete-Source.zip with ARA SDK/JUCE; for installation choose a platform ZIP.
+按用户要求，本发行不附加独立用户手册。安装和基本操作见双语安装说明与下文。
+As requested, this release has no separate user manual; see the bilingual installation guides and the documentation below.
 
 ## 1.04 更新 / What's new in 1.04 — 2026-09-20
 
@@ -268,3 +290,82 @@ The standard macOS installation paths are usually:
 This project's first-party source is licensed under the **Qing Audio Non-Commercial Source-Share License 1.0** (`LicenseRef-Qing-Audio-NC-Source-Share-1.0`). Commercial use is prohibited. Distribution of the original, binary, or modified version requires the complete corresponding source at no charge, preserved authorship, copyright, and license notices, prominent identification of the original project, author, source URL, modifier, date, and changes, and the same license for the entire modified work. See [LICENSE](LICENSE). Third-party components remain under their respective licenses.
 
 Previously distributed copies retain rights already granted; this License applies to copies supplied with it.
+
+## 0.94 齿音实验 / Sibilance experiment — historical Test
+
+日期未在现有记录中明确；状态：保留的实验基础，非当前主线。采用相对频谱比例检测、Breath 优先冲突处理、Sibilance 区域和独立处理、全局 Sibilance EQ/Gain/Norm，以及 Analyze 内容选择。识别准确率未达稳定要求，0.95 主线移除此功能。未在本次重新测试。
+The date is not specified in the surviving record. Status: retained experimental baseline, not the current main line. It used relative spectral-ratio detection, Breath-priority conflict handling, Sibilance regions/individual processing, global Sibilance EQ/Gain/Norm and Analyze content selection. Detection accuracy was not stable enough; the main line removed it in 0.95. It was not retested in this release.
+
+
+## 0.95 更新 / What's new in 0.95 — 2026-07-16
+
+历史记录；未在本次重新验证旧版本。/ Historical record; this old version was not retested in this release.
+
+### 中文
+
+- 主线版本取消 Sibilance 区域和自动齿音分析。
+- Analyze 恢复为只检测 Breath，并保留 Noise、Breath 和 Others 三种区域。
+- 0.94 齿音实验版本另行保存，供未来继续训练和研究。
+
+### English
+
+- Removed the Sibilance region and automatic sibilance analysis from the main line.
+- Returned Analyze to Breath-only detection while retaining Noise, Breath, and Others.
+- Preserved the 0.94 sibilance experiment separately for future training and research.
+
+## 0.97 更新 / What's new in 0.97 — 2026-07-16
+
+历史记录；未在本次重新验证旧版本。/ Historical record; this old version was not retested in this release.
+
+### 中文
+
+- 修复区域独立 EQ 和独立 Gain 只改变波形显示、但监听不到实际变化的问题。
+
+### English
+
+- Fixed per-region EQ and Gain changing the waveform display without being audible in live monitoring.
+
+## 0.98 更新 / What's new in 0.98 — 2026-07-16
+
+历史记录；未在本次重新验证旧版本。/ Historical record; this old version was not retested in this release.
+
+### 中文
+
+- 精简主界面，移除单独的 Draw 类型按钮组。
+- 右键切换区域类型后会记住该类型；下一次 Shift 拖动画区时自动沿用。
+- 统一 Global EQ 与 Region EQ 的单行控制布局和频谱窗口大小。
+
+### English
+
+- Simplified the main UI by removing the separate Draw type button group.
+- Remembered the type selected by right-click cycling and reused it for the next Shift-drag region.
+- Aligned the one-row Global EQ and Region EQ controls and spectrum sizing.
+
+## 1.0 更新 / What's new in 1.0 — 2026-07-28
+
+历史记录；未在本次重新验证旧版本。/ Historical record; this old version was not retested in this release.
+
+### 中文
+
+- 修复取消 Voice、Breath、Noise 或 Others 监听后，在音频线程遇到短暂锁竞争时仍可能漏出未处理声音的问题。
+- 为普通 VST3 监听增加安全静音回退，并验证 Breath、Noise、Others 监听开关可以独立生效。
+- 修复多轨 ARA 工程中不同 QQEasyTool 实例可能绑定到同一个波形或错误音源的问题。
+- ARA 选择现在会与当前插件实例实际分配的播放区域相交；多轨环境不再回退到工程中的第一个音源。
+- 将监听、Norm、Target、全局 Gain、全局 EQ 和区域处理状态按 ARA 音源独立保存、恢复和渲染。
+- 保留并通过 0.99 的 UI 关闭/重开状态测试，以及 Gain、Norm、全局/区域 EQ、Others 和区域类型记忆测试。
+
+### English
+
+- Fixed a lock-contention path that could leak unprocessed audio after Voice, Breath, Noise, or Others monitoring was disabled.
+- Added a safe-silence fallback for ordinary VST3 preview monitoring and verified independent Breath, Noise, and Others monitor switches.
+- Fixed different QQEasyTool instances in a multi-track ARA project binding to the same waveform or the wrong source.
+- ARA selection is now intersected with the playback regions assigned to the current plug-in instance; multi-track projects no longer fall back to the first source.
+- Stored, restored, and rendered monitor, Norm, Target, global Gain, global EQ, and region-processing state independently for each ARA source.
+- Retained and passed the 0.99 editor-recreation coverage together with Gain, Norm, global/region EQ, Others, and remembered-region-type checks.
+
+## 维护与构建 / Maintenance and builds
+
+权威交接记录 / Authoritative handoff: [AI_DEVELOPMENT_HANDOFF.md](AI_DEVELOPMENT_HANDOFF.md)。
+现行发布规则 / Current release workflow: [release_workflow.md](docs/release_workflow.md)。
+Windows 复用已验证的本机 Plan A 成品；GitHub 默认只生成三类 macOS。Windows CI 只在明确要求时以 build_windows=true 手动启用。
+Windows delivery reuses verified local Plan A output; GitHub defaults to three macOS builds. Windows cloud reproduction is opt-in with build_windows=true.

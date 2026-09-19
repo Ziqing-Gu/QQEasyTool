@@ -1,3 +1,9 @@
+# Current definitions / 现行编号
+
+The checklist below uses historical numbering. Cross-platform desktop delivery is now Plan C; Release publication and direct downloads are Plan D. See [release workflow](release_workflow.md). Plan B is frozen after completion.
+
+以下是保留的旧编号历史清单；现行流程以上述说明为准。
+
 # Plan D Release Checklist
 
 Plan D must include all Plan A, Plan B, and Plan C deliverables, plus:

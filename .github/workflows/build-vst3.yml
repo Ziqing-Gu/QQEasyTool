@@ -2,6 +2,11 @@ name: Build QQEasyTool VST3 and AU
 
 on:
   workflow_dispatch:
+    inputs:
+      build_windows:
+        description: 'Explicit optional Windows cloud reproduction'
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
@@ -137,6 +142,7 @@ jobs:
           if-no-files-found: error
 
   windows-x64:
+    if: github.event_name == 'workflow_dispatch' && inputs.build_windows == true
     name: Windows x64 VST3
     runs-on: windows-latest
     steps:

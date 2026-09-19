@@ -7,7 +7,7 @@ QQEasyTool 0.95 及之后的当前主线只自动分析 Breath，并保留 Noise
 未来如需继续开发齿音检测、标注训练、De-Esser 或独立齿音版本，标准起点是冻结保存的 QQEasyTool 0.94 源代码：
 
 ```text
-D:\备份文件\Vibe Coding\QQEasyTool\源代码\QQEasyTool-0.94-Sibilance-Base
+QQEasyTool-0.94-Sibilance-Base (historical archive identifier; private storage path omitted)
 ```
 
 该 0.94 版本包含相对频谱比例检测器、Breath 优先的冲突处理、Sibilance 区域、全局 Sibilance EQ/Gain/Norm、独立区域处理，以及 Analyze 检测内容选择窗口。
@@ -21,9 +21,11 @@ QQEasyTool 0.95 and later on the current main line analyze Breath only while ret
 The canonical starting point for future sibilance detection, labeling, training, De-Esser work, or a dedicated sibilance edition is the archived QQEasyTool 0.94 source:
 
 ```text
-D:\备份文件\Vibe Coding\QQEasyTool\源代码\QQEasyTool-0.94-Sibilance-Base
+QQEasyTool-0.94-Sibilance-Base (historical archive identifier; private storage path omitted)
 ```
 
 That 0.94 version contains the relative spectral-ratio detector, Breath-priority conflict handling, Sibilance regions, global Sibilance EQ/Gain/Norm, per-region processing, and the Analyze content-selection dialog.
 
 Do not reconstruct the removed sibilance logic from the Breath-only 0.95+ main line. Copy the frozen 0.94 source and use it as the starting point for a new sibilance research branch.
+
+维护说明：该路径仅作为历史档案标识，不授权后续 Plan 访问已完成的 Plan B。/ Maintenance note: this historical archive reference does not authorize later release stages to inspect a completed Plan B backup.

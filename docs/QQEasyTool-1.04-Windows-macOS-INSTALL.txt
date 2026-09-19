@@ -1,119 +1,70 @@
-Stable / 用户指定稳定版 — 2026-09-20
+QQEasyTool 1.04 Stable — Windows / macOS installation and upgrade guide
+Manufacturer: Qing Audio
+Release date: 2026-09-20
+Internal plug-in version: 1.0.4
 
-QQEasyTool 1.04 - Windows / macOS VST3 / AU installation and usage guide
-==========================================================================
-
-PACKAGE CHOICE
---------------
-
-1. QQEasyTool-macOS-Apple-Silicon-1.04.zip
-   VST3 for Apple Silicon Macs (M1/M2/M3/M4 and later).
-
-2. QQEasyTool-macOS-Intel-1.04.zip
-   VST3 for Intel Macs.
-
-3. QQEasyTool-macOS-AU-Universal-1.04.zip
-   Universal 2 Audio Unit for Logic Pro. It contains arm64 and x86_64.
-
-4. QQEasyTool-Windows-x64-1.04.zip
-   VST3 for 64-bit Windows hosts.
-
-SYSTEM REQUIREMENTS
--------------------
-
-- macOS 11 or later.
-- A compatible 64-bit DAW.
-- These free builds are ad-hoc signed, not Developer ID signed or notarized.
-- Windows 10 or Windows 11 x64 for the Windows VST3 build.
-- A 64-bit VST3-compatible Windows DAW.
-
-INSTALL LOCATIONS
------------------
-
-Windows VST3:
-1. Close the DAW.
-2. Extract QQEasyTool-Windows-x64-1.04.zip.
-3. Copy the complete QQEasyTool.vst3 folder to:
-     C:\Program Files\Common Files\VST3\
-4. Replace the old QQEasyTool.vst3 folder if one is already installed.
-5. Restart the DAW and rescan or reactivate QQEasyTool in the plug-in manager.
-
-If Windows marks the downloaded ZIP as blocked, right-click the ZIP, open
-Properties, select Unblock, click Apply, and then extract it again.
-
-macOS VST3:
-Copy QQEasyTool.vst3 to:
-  /Library/Audio/Plug-Ins/VST3/
-
-Copy QQEasyTool.component to:
-  /Library/Audio/Plug-Ins/Components/
-
-Restart the DAW and rescan plug-ins after installation or replacement.
-
-USAGE
------
-
-ARA in Cubase/Nuendo:
-1. Add QQEasyTool as an Audio Extension to the selected audio event.
-2. Open QQEasyTool and click Load.
-3. Click Analyze, edit Breath/Noise regions, monitor the required stems, and export when ready.
-
-Plain VST3 recording:
-1. Insert QQEasyTool on the vocal track.
-2. Click Record to arm it, then play the DAW timeline.
-3. Stop DAW playback to stop recording.
-4. Click Analyze and continue editing/monitoring.
-
-Logic Pro / AU / ARA 2:
-- Logic Pro does not load VST3. Install QQEasyTool.component.
-- Insert QQEasyTool in the first Audio Effect slot to use ARA mode.
-- On Apple Silicon, Apple currently requires Logic Pro to run with Rosetta for third-party ARA Audio Units. Quit Logic, open Applications, select Logic Pro, choose Get Info, enable Open using Rosetta, then reopen Logic.
-
-FIRST-LAUNCH SECURITY NOTICE
-----------------------------
-
-If macOS blocks QQEasyTool during the first scan:
-1. Trigger one plug-in scan in the DAW.
-2. Open System Settings > Privacy & Security.
-3. Find the QQEasyTool warning and click Open Anyway.
-4. Enter the Mac login password and confirm.
-5. Restart the DAW and rescan/reactivate QQEasyTool.
-
-Trusted-source fallback commands:
-
-  sudo xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3"
-  sudo xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/Components/QQEasyTool.component"
-
-Only run these commands for archives downloaded from the official QQEasyTool GitHub repository.
-
-
-## 1.04 更新 / What's new in 1.04
-
-### 中文
-
-- 修复“停止时点击插件波形，按播放却回到 DAW 位置”的问题。所选音频位置保持为待播放状态，在第一个实际播放音频块建立时间对应关系，从点击处开始播放。
-- 停止期间重复的音频回调、启动时的宿主时间变化、零长度处理块和音频引擎重新准备不会吞掉待播放选择。
-- 后续 DAW 定位跳变仍取消内部试听偏移和内部循环，恢复原始工程时间线；停止时宿主报告的新定位也会取消待播放选择。
-- 普通 VST3 界面使用音频线程发布的位置快照，避免在界面线程直接读取宿主播放时钟。ARA、分析、监听及 EQ 处理保持原有行为。
-
-### English
-
-- Fixed a stopped waveform selection being lost when Play starts. The selected local sample remains pending until the first rendered playing block, where it is anchored to the actual host clock.
-- Repeated stopped callbacks, a different startup timestamp, zero-length blocks, and audio-engine preparation do not consume the pending selection.
-- Subsequent DAW seeks still cancel audition offsets and internal loops. A new host-reported stopped position cancels the pending selection before playback.
-- The ordinary VST3 editor reads a published audio-thread transport snapshot instead of querying the host playhead from the UI thread. ARA, analysis, monitoring, and EQ processing retain their existing behavior.
-
-LICENSE / 许可与源码
-===================
-禁止商业使用 / NO COMMERCIAL USE.
-Qing Audio Non-Commercial Source-Share License 1.0.
-Complete LICENSE and third-party notices are included inside each archive.
-每个安装压缩包内保留完整许可证与第三方声明。
-Based on QQEasyTool by Qing Audio / Ziqing Gu.
-Original source: https://github.com/Ziqing-Gu/QQEasyTool
-Modified by: Codex at the user's request.
-Modification date: 2026-09-20; ordinary VST3 waveform audition and DAW seek alignment.
-Complete corresponding source / 完整对应源码：
+1. Scope, license and source
+This is a source-available, non-commercial plug-in distribution. NO COMMERCIAL USE. Redistribution must provide complete corresponding source without charge and preserve attribution, change date/description and licenses. Plug-in ZIPs include LICENSE and third-party notices but not source. Download the complete source separately:
 https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-1.04-Complete-Source.zip
-Windows transport tests passed; macOS packages receive CI build/architecture/signature checks.
-本次改动为普通 VST3 播放同步；未宣称完成新的 macOS 或 ARA 宿主实机验收。
+Repository: https://github.com/Ziqing-Gu/QQEasyTool
+Release tag: v1.04
+Binary build commit: 631e27e3c1d9e4019dab3626c94cffcb60266d43
+This release contains one product: QQEasyTool.vst3 (VST3) and QQEasyTool.component (AU). Upgrade every format you use to 1.04; do not mix old versions.
+Windows: Windows 10/11 x64 and a 64-bit VST3 host.
+macOS: macOS 11 or later; match the host's running architecture.
+
+2. Choose the correct archive
+QQEasyTool-Windows-x64-1.04.zip — Windows x64 VST3
+QQEasyTool-macOS-Apple-Silicon-1.04.zip — native Apple Silicon arm64 VST3
+QQEasyTool-macOS-Intel-1.04.zip — Intel x86_64 VST3, also for an x86_64/Rosetta host on Apple Silicon
+QQEasyTool-macOS-AU-Universal-1.04.zip — Universal 2 AU with both arm64 and x86_64; use AU for Logic Pro
+Install only the formats you need. Select exactly one Mac VST3 architecture; do not install both. No Linux package is provided.
+
+3. Windows installation / upgrade
+1) Completely quit Cubase, Nuendo, REAPER, Studio One and every other plug-in host/scanner.
+2) Extract QQEasyTool-Windows-x64-1.04.zip. The root must contain the complete QQEasyTool.vst3 folder.
+3) Copy that entire folder into:
+   C:\Program Files\Common Files\VST3
+   Administrator approval may be needed. Replace the corresponding existing files. Do not create two nested folders with the same .vst3 name.
+4) The plug-in filename has not changed. Remove old/duplicate copies from other scanned locations while hosts are closed, then copy the new version.
+5) Reopen the host and rescan/reactivate VST3. If an old version remains visible, check duplicate scan paths, restart the host, and follow its documented plug-in-cache reset procedure.
+If Windows blocks the downloaded ZIP, unblock it in file Properties and extract again.
+
+4. macOS VST3 installation / upgrade
+1) Quit all DAWs. Check whether the host runs as native arm64 or Intel/Rosetta x86_64; select only one matching VST3 ZIP.
+2) Extract and copy the complete QQEasyTool.vst3 bundle into the user folder:
+   ~/Library/Audio/Plug-Ins/VST3
+   Or the system folder, which may require administrator approval:
+   /Library/Audio/Plug-Ins/VST3
+   Use Finder > Go > Go to Folder and enter the path. Holding Option in Finder's Go menu also reveals the user Library.
+3) Keep only one copy of this format across user/system folders. With all hosts closed, move old/duplicate copies out before installing the new version.
+4) Reopen the DAW and rescan VST3; restart the computer if necessary.
+
+5. macOS AU installation / upgrade
+Extract QQEasyTool-macOS-AU-Universal-1.04.zip and copy the complete QQEasyTool.component into:
+~/Library/Audio/Plug-Ins/Components
+or /Library/Audio/Plug-Ins/Components (administrator approval may be needed).
+AU and VST3 are separate formats. Install only what you need; avoid duplicates of the same format in user/system folders.
+Logic Pro does not load VST3. After installing AU, use Logic Pro's Plug-in Manager to reset/rescan QQEasyTool; other hosts provide their own Audio Units rescan.
+For third-party ARA AU workflows unavailable in native mode, follow the host's requirements for running Logic Pro under Rosetta and rescan. This is not a claim of new Logic/ARA host testing.
+
+6. macOS security and loading problems
+Mac packages are ad-hoc signed, not Apple Developer ID signed or notarized. Download quarantine can block scanning.
+First try allowing the plug-in in System Settings > Privacy & Security. Only for a trusted download from this repository, apply the commands to the actual installation location:
+xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3"
+xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/Components/QQEasyTool.component"
+For system-wide locations, only if installed there:
+sudo xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3"
+sudo xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/Components/QQEasyTool.component"
+Do not remove quarantine from files of uncertain origin. Quit/reopen the host, rescan, and restart the computer if needed.
+
+7. Version behavior, manuals and validation limits
+Ordinary VST3: click the waveform while stopped, then press Play to start the selected audio. Pause/resume in place retains audition. A later DAW relocation or cycle wrap clears the audition offset/internal loop and realigns both cursor and audio with the project. A new host-reported stopped location also cancels a pending selection.
+ARA playback/processing is unchanged. Ordinary VST3 and ARA share the plug-in binary but use different host workflows.
+As requested, no separate user manual is included. See this installation guide and the repository README for basic operation and changes.
+Windows regression/loading checks passed. The three Mac builds, architecture checks and signature-data checks passed. Build checks are not real macOS/ARA host acceptance.
+https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.04
+
+Based on QQEasyTool by Qing Audio / Ziqing Gu.
+Modified by Codex at the user's request, 2026-09-20.
+Changes: ordinary VST3 audition / DAW relocation synchronization. This remediation updates documentation and release procedure only, without changing plug-in binaries.

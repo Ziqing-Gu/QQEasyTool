@@ -16,6 +16,22 @@
 - The ordinary VST3 editor reads an audio-thread transport snapshot instead of directly querying the host clock from the UI thread.
 - Preserved EasyTool's ARA input/cache processing, Voice/Breath/Noise/Others monitoring, Norm, Gain, EQ, region editing, and project-state format.
 
+## 1.03 更新 / What's new in 1.03
+
+### 中文
+
+- **修复 ARA 工程重开后的爆音/噼啪声：** 工程状态恢复后，音频源由后台线程预加载到不可变缓存。
+- **禁止实时音频线程直接读取 ARA 音源：** 缓存准备完成前只输出静音，避免在播放回调中发生宿主音频读取、锁竞争和磁盘/解码操作。
+- **适配多音源和已保存工程状态：** 恢复的每个 ARA source 都会按 fingerprint 独立缓存，缓存完成后再安全进入实时渲染。
+- **版本说明：** 未改变 Breath、Noise、Others、监听、EQ、Gain 或分析规则。
+
+### English
+
+- **Fixed crackle after reopening an ARA project:** Restored ARA sources are now preloaded by a background worker into immutable audio caches.
+- **Removed realtime ARA source reads:** The audio callback never reads host source data, waits for a reader, or performs large source I/O. It outputs silence until the cache is ready.
+- **Supports restored multi-source state:** Each restored ARA source is cached independently by fingerprint before safe realtime rendering.
+- **Behavior preserved:** Breath, Noise, Others, monitoring, EQ, Gain, and analysis rules were not changed.
+
 ## 1.02 Update / What's new in 1.02 - 2026-08-03
 
 ### 中文
@@ -124,3 +140,9 @@
 - Removed the Sibilance region and automatic sibilance analysis from the main line.
 - Returned Analyze to Breath-only detection while retaining Noise, Breath, and Others.
 - Preserved the 0.94 sibilance experiment separately for future training and research.
+
+## 0.94 齿音实验 / Sibilance experiment — historical Test
+
+日期未在现有记录中明确；状态：保留的实验基础，非当前主线。采用相对频谱比例检测、Breath 优先冲突处理、Sibilance 区域和独立处理、全局 Sibilance EQ/Gain/Norm，以及 Analyze 内容选择。识别准确率未达稳定要求，0.95 主线移除此功能。未在本次重新测试。
+The date is not specified in the surviving record. Status: retained experimental baseline, not the current main line. It used relative spectral-ratio detection, Breath-priority conflict handling, Sibilance regions/individual processing, global Sibilance EQ/Gain/Norm and Analyze content selection. Detection accuracy was not stable enough; the main line removed it in 0.95. It was not retested in this release.
+
