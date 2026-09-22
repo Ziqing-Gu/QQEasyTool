@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(QQEasyTool VERSION 1.0.4 LANGUAGES CXX)
+project(QQEasyTool VERSION 1.0.5 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -69,6 +69,7 @@ target_sources(QQEasyTool
         src/shared/BreathEqComponent.cpp
         src/shared/NativeAnalysis.cpp
         src/shared/WaveformEditorComponent.cpp
+        src/shared/WaveformDisplayRender.cpp
 )
 
 target_include_directories(QQEasyTool
@@ -214,4 +215,22 @@ if(QQEASYTOOL_BUILD_TRANSPORT_SYNC_PROBE)
         PRIVATE QQEasyTool juce::juce_audio_utils juce::juce_dsp
         PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags
     )
+endif()
+
+option(QQEASYTOOL_BUILD_WAVEFORM_DISPLAY_PROBE "Build waveform responsiveness/reference probe" ON)
+if(QQEASYTOOL_BUILD_WAVEFORM_DISPLAY_PROBE)
+    add_executable(qq_easytool_waveform_display_probe
+        tests/WaveformDisplayProbe.cpp
+        tests/LegacyEasyWaveform104.cpp
+        src/shared/WaveformEditorComponent.cpp
+        src/shared/WaveformDisplayRender.cpp
+        src/shared/BreathEq.cpp
+    )
+    target_include_directories(qq_easytool_waveform_display_probe PRIVATE src)
+    target_compile_definitions(qq_easytool_waveform_display_probe PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+    if(MSVC)
+        target_compile_options(qq_easytool_waveform_display_probe PRIVATE /utf-8)
+    endif()
+    target_link_libraries(qq_easytool_waveform_display_probe PRIVATE juce::juce_audio_utils juce::juce_dsp
+        PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 endif()

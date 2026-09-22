@@ -3,12 +3,9 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 
 #include "shared/BridgeAnalysis.h"
-#include "WaveformDisplayRender.h"
-#include <map>
 
-class QQDeBreathWaveformEditor final : public juce::Component,
-                                       private juce::ScrollBar::Listener,
-                                       private juce::Timer
+class LegacyEasyWaveform104 final : public juce::Component,
+                                       private juce::ScrollBar::Listener
 {
 public:
     struct DisplayProcessingParams
@@ -26,8 +23,7 @@ public:
         QQDeBreathEqState sibilanceEqState;
     };
 
-    QQDeBreathWaveformEditor();
-    ~QQDeBreathWaveformEditor() override;
+    LegacyEasyWaveform104();
 
     void paint(juce::Graphics& g) override;
     void resized() override;
@@ -73,9 +69,6 @@ public:
 
 private:
     friend class QQDeBreathWaveformDisplayProbe;
-    void timerCallback() override;
-    void invalidateSourceDisplay();
-    double cachedRegionPeak(const QQDeBreathBridgeRegion&) const;
     enum class DragMode
     {
         none,
@@ -139,16 +132,6 @@ private:
     juce::AudioBuffer<float> processedBreathDisplay;
     juce::AudioBuffer<float> processedSibilanceDisplay;
     juce::AudioBuffer<float> processedOthersDisplay;
-    juce::AudioBuffer<float> processedFixedBreathDisplay, processedFixedSibilanceDisplay;
-    bool processedDisplayNormalised = false, processedSibilanceNormalised = false;
-    bool localBreathProcessing = false, localSibilanceProcessing = false;
-    uint64_t regionDisplayRevision = 0, displayRequestedRevision = 0, displayAppliedRevision = 0;
-    double displayGain = 1.0, displayNormTarget = 0.5011872336272722;
-    double displaySibilanceGain = 1.0, displaySibilanceTarget = 0.251188643150958;
-    std::vector<juce::int64> displayPrefixEnds;
-    mutable std::map<std::pair<juce::int64, juce::int64>, double> regionPeakMemo;
-    std::shared_ptr<const juce::AudioBuffer<float>> displaySource;
-    QQDeBreathWaveformDisplay::Worker displayWorker;
     juce::String processedBreathDisplayKey;
     int selectedRegion = -1;
     double viewStart = 0.0;
@@ -177,5 +160,5 @@ private:
     bool moveUndoPushed = false;
     bool deferredRegionDisplayRebuild = false;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(QQDeBreathWaveformEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LegacyEasyWaveform104)
 };

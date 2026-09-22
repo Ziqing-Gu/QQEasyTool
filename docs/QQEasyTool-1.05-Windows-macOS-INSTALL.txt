@@ -1,0 +1,74 @@
+QQEasyTool 1.05 — Windows / macOS installation and upgrade guide
+Manufacturer: Qing Audio
+Release date: 2026-09-22
+Internal plug-in version: 1.0.5
+
+1. Scope, license and source
+This is a source-available, non-commercial plug-in distribution. NO COMMERCIAL USE. Redistribution must provide complete corresponding source without charge and preserve attribution, change date/description and licenses. Plug-in ZIPs contain installable bundles, not source; complete source and license notices are in Complete-Source.zip. Download the complete source separately:
+https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-1.05-Complete-Source.zip
+Repository: https://github.com/Ziqing-Gu/QQEasyTool
+Release tag: v1.05
+This release contains one product: QQEasyTool.vst3 (VST3) and QQEasyTool.component (AU). Upgrade every format you use to 1.05; do not mix old versions.
+Windows: Windows 10/11 x64 and a 64-bit VST3 host.
+macOS: macOS 11 or later; match the host's running architecture.
+
+2. Choose the correct archive
+QQEasyTool-Windows-x64-1.05.zip — Windows x64 VST3
+QQEasyTool-macOS-Apple-Silicon-1.05.zip — native Apple Silicon arm64 VST3
+QQEasyTool-macOS-Intel-1.05.zip — Intel x86_64 VST3, also for an x86_64/Rosetta host on Apple Silicon
+QQEasyTool-macOS-AU-Universal-1.05.zip — Universal 2 AU with both arm64 and x86_64; use AU for Logic Pro
+Install only the formats you need. Select exactly one Mac VST3 architecture; do not install both. No Linux package is provided.
+
+3. Windows installation / upgrade
+1) Completely quit Cubase, Nuendo, REAPER, Studio One and every other plug-in host/scanner.
+2) Extract QQEasyTool-Windows-x64-1.05.zip. The root must contain the complete QQEasyTool.vst3 folder.
+3) Copy that entire folder into:
+   C:\Program Files\Common Files\VST3
+   Administrator approval may be needed. Replace the corresponding existing files. Do not create two nested folders with the same .vst3 name.
+4) The plug-in filename has not changed. Remove old/duplicate copies from other scanned locations while hosts are closed, then copy the new version.
+5) Reopen the host and rescan/reactivate VST3. If an old version remains visible, check duplicate scan paths, restart the host, and follow its documented plug-in-cache reset procedure.
+If Windows blocks the downloaded ZIP, unblock it in file Properties and extract again.
+
+4. macOS VST3 installation / upgrade
+1) Quit all DAWs. Check whether the host runs as native arm64 or Intel/Rosetta x86_64; select only one matching VST3 ZIP.
+2) Extract and copy the complete QQEasyTool.vst3 bundle into the user folder:
+   ~/Library/Audio/Plug-Ins/VST3
+   Or the system folder, which may require administrator approval:
+   /Library/Audio/Plug-Ins/VST3
+   Use Finder > Go > Go to Folder and enter the path. Holding Option in Finder's Go menu also reveals the user Library.
+3) Keep only one copy of this format across user/system folders. With all hosts closed, move old/duplicate copies out before installing the new version.
+4) Reopen the DAW and rescan VST3; restart the computer if necessary.
+
+5. macOS AU installation / upgrade
+Extract QQEasyTool-macOS-AU-Universal-1.05.zip and copy the complete QQEasyTool.component into:
+~/Library/Audio/Plug-Ins/Components
+or /Library/Audio/Plug-Ins/Components (administrator approval may be needed).
+AU and VST3 are separate formats. Install only what you need; avoid duplicates of the same format in user/system folders.
+Logic Pro does not load VST3. After installing AU, use Logic Pro's Plug-in Manager to reset/rescan QQEasyTool; other hosts provide their own Audio Units rescan.
+For third-party ARA AU workflows unavailable in native mode, follow the host's requirements for running Logic Pro under Rosetta and rescan. This is not a claim of new Logic/ARA host testing.
+
+6. macOS security and loading problems
+Mac packages are ad-hoc signed, not Apple Developer ID signed or notarized. Download quarantine can block scanning.
+First try allowing the plug-in in System Settings > Privacy & Security. Only for a trusted download from this repository, apply the commands to the actual installation location:
+xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3"
+xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/Components/QQEasyTool.component"
+For system-wide locations, only if installed there:
+sudo xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3"
+sudo xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/Components/QQEasyTool.component"
+Do not remove quarantine from files of uncertain origin. Quit/reopen the host, rescan, and restart the computer if needed.
+
+7. Version behavior, manuals and validation limits
+Ordinary VST3: click the waveform while stopped, then press Play to start the selected audio. Pause/resume in place retains audition. A later DAW relocation or cycle wrap clears the audition offset/internal loop and realigns both cursor and audio with the project. A new host-reported stopped location also cancels a pending selection.
+ARA playback/processing is unchanged. Ordinary VST3 and ARA share the plug-in binary but use different host workflows.
+As requested, no separate user manual is included. See this installation guide and the repository README for basic operation and changes.
+Windows regression/loading checks passed. Mac build, architecture and signature verification records are supplied with the release. Build checks are not real macOS/ARA host acceptance.
+https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.05
+
+Based on QQEasyTool by Qing Audio / Ziqing Gu.
+Modified by Codex at the user's request, 2026-09-22.
+Changes: Gain/Norm Target and EQ Auto Apply responsiveness; 1.04 routing, compatibility and playback synchronization preserved.
+
+1.05 更新 / Changes
+Gain 和 Norm Target 直接缩放波形缓存；全局/区域 EQ 波形计算在后台执行，只采用最新修改。拖动不再触发整段音频的静态频谱计算。试听参数独立更新，波形可能稍后刷新。保留 Voice/Breath/Noise/Others、旧类型兼容及 Auto Apply 关闭时的预览/Apply 规则。音频处理器、EQ DSP、参数格式和 1.04 播放同步保持不变。
+Gain/Norm Target scale cached waveform data. Global/selected EQ waveform rendering uses a latest-request background worker. Dragging avoids whole-file static spectra. Audition updates independently and waveforms may finish later. Voice/Breath/Noise/Others routing, legacy type compatibility and manual preview/Apply are preserved. Audio processor/EQ DSP, parameter format and 1.04 transport synchronization are unchanged.
+1.05 经用户授权发布，尚未单独指定为 Stable；之前的 Stable 为 1.04。No new real DAW acceptance is claimed; 1.05 publication is user-authorized and the prior explicitly designated Stable is 1.04.

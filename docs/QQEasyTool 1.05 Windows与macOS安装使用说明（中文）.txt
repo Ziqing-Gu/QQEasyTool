@@ -1,0 +1,74 @@
+QQEasyTool 1.05 — Windows / macOS 安装与升级说明
+厂商：Qing Audio
+发布日期：2026-09-22
+插件内部版本：1.0.5
+
+1. 发行范围、许可与源码
+本包为源码可见非商业插件成品，禁止商业使用。分发时必须免费提供完整对应源码，并保留作者、出处、修改日期、修改说明和许可证。插件 ZIP 只包含可安装插件，不含源码；完整源码包包含本项目和依赖源码及许可声明；完整源码单独下载：
+https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-1.05-Complete-Source.zip
+源码仓库：https://github.com/Ziqing-Gu/QQEasyTool
+发行标签：v1.05
+本次只有一个产品：VST3 的 QQEasyTool.vst3 与 AU 的 QQEasyTool.component；使用的格式均应升级至 1.05，不要混用旧版。
+Windows：Windows 10/11 x64 与 64 位 VST3 宿主。
+macOS：macOS 11 或更高版本，选择匹配宿主运行架构的包。
+
+2. 文件选择
+QQEasyTool-Windows-x64-1.05.zip — Windows x64 VST3
+QQEasyTool-macOS-Apple-Silicon-1.05.zip — Apple Silicon 原生 arm64 VST3
+QQEasyTool-macOS-Intel-1.05.zip — Intel x86_64 VST3；在 Apple Silicon 上运行 x86_64/Rosetta 宿主时选择此架构
+QQEasyTool-macOS-AU-Universal-1.05.zip — Universal 2 AU，同时含 arm64 与 x86_64；Logic Pro 使用 AU
+仅安装需要的格式。Mac 的 VST3 只选择一个架构包，不要同时安装两套。Linux 本次不提供。
+
+3. Windows 安装/升级
+1) 完全退出 Cubase、Nuendo、REAPER、Studio One 及其他插件宿主和扫描程序。
+2) 解压 QQEasyTool-Windows-x64-1.05.zip，确认根层存在完整的 QQEasyTool.vst3 文件夹。
+3) 将整个 QQEasyTool.vst3 文件夹复制到：
+   C:\Program Files\Common Files\VST3
+   系统目录可能要求管理员权限。已有同名插件时覆盖对应文件；避免出现两层同名 .vst3 文件夹。
+4) 本版本实际插件文件名未变。其他扫描目录中的旧版/重复副本不要与新版并存；先退出宿主，移走旧副本，再复制新版。
+5) 重新打开宿主，执行 VST3 重新扫描/重新激活。若仍显示旧版，检查重复扫描目录，退出再打开宿主；按宿主自己的说明清除插件扫描缓存。
+下载 ZIP 若被 Windows 阻止，可在文件属性中解除锁定后重新解压。
+
+4. macOS VST3 安装/升级
+1) 退出所有 DAW。确认宿主为原生 arm64 还是 Intel/Rosetta x86_64，按第 2 节只选择一个 VST3 ZIP。
+2) 解压后复制完整 QQEasyTool.vst3 到用户目录：
+   ~/Library/Audio/Plug-Ins/VST3
+   或系统目录（通常需要管理员权限）：
+   /Library/Audio/Plug-Ins/VST3
+   Finder 可用“前往 > 前往文件夹”输入上述路径；按住 Option 打开“前往”菜单也可显示用户资源库。
+3) 用户目录与系统目录只保留一份该插件。先在宿主完全退出时移走旧版/重复副本，再复制新版。
+4) 重新打开宿主并重新扫描 VST3。必要时重启电脑后再扫描。
+
+5. macOS AU 安装/升级
+解压 QQEasyTool-macOS-AU-Universal-1.05.zip，复制完整 QQEasyTool.component 到：
+~/Library/Audio/Plug-Ins/Components
+或 /Library/Audio/Plug-Ins/Components（需要时提供管理员权限）。
+AU 与 VST3 为独立格式，只装需要的格式；同一格式避免用户/系统目录重复安装。
+Logic Pro 不加载 VST3。安装 AU 后打开 Logic Pro 的插件管理器，对 QQEasyTool 执行重置与重新扫描；其他宿主使用其 Audio Units 重扫功能。
+如需第三方 ARA AU 且原生模式不能使用宿主的 ARA 工作流，可按宿主要求以 Rosetta 运行 Logic Pro，再重新扫描。此说明不代表本次新增 Logic/ARA 实机验证。
+
+6. macOS 安全与加载失败
+Mac 插件采用 ad-hoc 签名，没有 Apple Developer ID 签名或公证。macOS 可能因下载隔离阻止扫描。
+先尝试“系统设置 > 隐私与安全性”中允许相应插件。仅在确认来自本仓库、文件可信时，在终端对实际安装位置执行：
+xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3"
+xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/Components/QQEasyTool.component"
+系统目录示例（仅在实际安装于该处时执行）：
+sudo xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3"
+sudo xattr -dr com.apple.quarantine "/Library/Audio/Plug-Ins/Components/QQEasyTool.component"
+不确定来源时不要执行解除隔离命令。之后退出并重开宿主、重新扫描；必要时重启电脑。
+
+7. 本版使用变化、说明书与验证边界
+普通 VST3：停止时点击插件波形，再按播放，从所选音频位置开始；原地停止/继续保留试听位置。随后在 DAW 重新定位或循环回跳时，取消内部试听偏移与循环，指针和实际音频恢复工程对齐。停止时宿主报告新定位，也会取消待播放选择。
+ARA 播放/处理逻辑未改变。普通 VST3 与 ARA 使用同一插件文件，但对应宿主工作流不同。
+按用户要求，本发行不附加独立用户说明书。基本操作和更新信息见此安装说明及仓库 README。
+Windows 自动回归和加载检查通过；三个 Mac 构建、架构和签名数据检查通过。不把编译检查当作 Mac/ARA 宿主实机验收。
+https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.05
+
+Based on QQEasyTool by Qing Audio / Ziqing Gu.
+Modified by Codex at the user's request, 2026-09-22.
+本次修改：Gain/Norm Target 和 EQ Auto Apply 交互优化；保留 1.04 的分轨、兼容性和播放同步规则。
+
+1.05 更新 / Changes
+Gain 和 Norm Target 直接缩放波形缓存；全局/区域 EQ 波形计算在后台执行，只采用最新修改。拖动不再触发整段音频的静态频谱计算。试听参数独立更新，波形可能稍后刷新。保留 Voice/Breath/Noise/Others、旧类型兼容及 Auto Apply 关闭时的预览/Apply 规则。音频处理器、EQ DSP、参数格式和 1.04 播放同步保持不变。
+Gain/Norm Target scale cached waveform data. Global/selected EQ waveform rendering uses a latest-request background worker. Dragging avoids whole-file static spectra. Audition updates independently and waveforms may finish later. Voice/Breath/Noise/Others routing, legacy type compatibility and manual preview/Apply are preserved. Audio processor/EQ DSP, parameter format and 1.04 transport synchronization are unchanged.
+1.05 经用户授权发布，尚未单独指定为 Stable；之前的 Stable 为 1.04。No new real DAW acceptance is claimed; 1.05 publication is user-authorized and the prior explicitly designated Stable is 1.04.

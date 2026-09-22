@@ -396,7 +396,7 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
     addAndMakeVisible(titleLabel);
     titleLabel.setVisible(false);
 
-    phaseLabel.setText("QQEasyTool 1.04 | Breath Analysis | Live Region Monitor", juce::dontSendNotification);
+    phaseLabel.setText("QQEasyTool 1.05 | Breath Analysis | Live Region Monitor", juce::dontSendNotification);
     phaseLabel.setJustificationType(juce::Justification::centred);
     phaseLabel.setColour(juce::Label::textColourId, juce::Colour(0xffcbd5e1));
     phaseLabel.setFont(juce::Font(18.0f, juce::Font::plain));
@@ -646,18 +646,8 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
     fadeOutSlider.onValueChange = [this] { syncAraPlaybackParams(); };
     breathTargetSlider.onValueChange = [this] { syncAraPlaybackParams(); };
     sibilanceTargetSlider.onValueChange = [this] { syncAraPlaybackParams(); };
-    breathGainSlider.onValueChange = [this]
-    {
-        syncAraPlaybackParams();
-        requestDeferredSpectrumRefresh();
-        requestDeferredWaveformRefresh(false);
-    };
-    sibilanceGainSlider.onValueChange = [this]
-    {
-        syncAraPlaybackParams();
-        requestDeferredSpectrumRefresh();
-        requestDeferredWaveformRefresh(false);
-    };
+    breathGainSlider.onValueChange = [this] { syncAraPlaybackParams(); };
+    sibilanceGainSlider.onValueChange = [this] { syncAraPlaybackParams(); };
     juce::Slider* sliders[] = { &fadeInSlider, &fadeOutSlider, &breathTargetSlider, &sibilanceTargetSlider, &breathGainSlider, &sibilanceGainSlider, &waveformSizeSlider };
     for (auto* slider : sliders)
         addAndMakeVisible(*slider);
@@ -856,7 +846,7 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
         {
             waveformEditor.setRegionProcessing(selectedRegionIndex, breathDetailGainSlider.getValue(), eq, false, false);
             audioProcessor.updateAnalysisRegionsPreservingCaches(waveformEditor.getRegions());
-            updateAraRuntimeState();
+            requestDeferredAraRuntimeUpdate();
             syncAraPlaybackParams();
         }
         else
@@ -872,7 +862,6 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
             requestDeferredWaveformRefresh(true);
         }
 
-        requestDeferredSpectrumRefresh();
     };
     breathDetailEqEditor.setTheme("Selected Region EQ", juce::Colour(0xfff59e0b), juce::Colour(0xffa78bfa));
     addChildComponent(breathDetailEqEditor);
@@ -1726,8 +1715,7 @@ void QQDeBreathAudioProcessorEditor::applyBreathDetailFromUi()
     {
         requestDeferredWaveformRefresh(false);
     }
-    if (showingBreathDetailPage)
-        requestDeferredSpectrumRefresh();
+
 }
 
 void QQDeBreathAudioProcessorEditor::updateBreathDetailPreviewForListening(double gainDb, const QQDeBreathEqState& eqState)
@@ -1743,7 +1731,7 @@ void QQDeBreathAudioProcessorEditor::updateBreathDetailPreviewForListening(doubl
     region.gainDb = juce::jlimit(-30.0, 30.0, gainDb);
     region.eqState = sanitizeBreathEqState(eqState);
     audioProcessor.updateAnalysisRegionsPreservingCaches(regions);
-    updateAraRuntimeState();
+    requestDeferredAraRuntimeUpdate();
     syncAraPlaybackParams();
 }
 
@@ -2224,7 +2212,7 @@ void QQDeBreathAudioProcessorEditor::applyBreathEqStateFromUi(const QQDeBreathEq
     {
         breathEqPreviewDirty = true;
     }
-    requestDeferredSpectrumRefresh();
+
 }
 
 void QQDeBreathAudioProcessorEditor::applyBreathEqPreviewToWaveform()
@@ -2364,8 +2352,8 @@ void QQDeBreathAudioProcessorEditor::requestDeferredSpectrumRefresh()
 
 void QQDeBreathAudioProcessorEditor::requestDeferredAraRuntimeUpdate()
 {
+    if (!pendingAraRuntimeUpdate) pendingAraRuntimeUpdateMs = juce::Time::getMillisecondCounter();
     pendingAraRuntimeUpdate = true;
-    pendingAraRuntimeUpdateMs = juce::Time::getMillisecondCounter();
 }
 
 void QQDeBreathAudioProcessorEditor::rollbackBreathEqPreviewIfNeeded()
@@ -2475,6 +2463,7 @@ void QQDeBreathAudioProcessorEditor::refreshBreathEqSpectrumSource()
         return;
 
     breathEqSpectrumSourceKey.clear();
+    breathEqSpectrumPeakMemo.clear();
     breathEqSpectrumSampleRate = 0.0;
     breathEqSpectrumSourceBuffer.setSize(0, 0);
 
@@ -2828,30 +2817,63 @@ void QQDeBreathAudioProcessorEditor::updateBreathEqDynamicSpectrum()
                               ? static_cast<int>(std::llround(audioProcessor.parameters.getRawParameterValue(QQDeBreath::ParamIDs::fadeOutMs)->load() * breathEqSpectrumSampleRate / 1000.0))
                               : 0;
 
-    std::vector<double> peakCache(static_cast<size_t>(result.regions.size()), -1.0);
-    auto peakForRegion = [&](int regionIndex)
-    {
-        auto& cached = peakCache[static_cast<size_t>(regionIndex)];
-        if (cached >= 0.0)
-            return cached;
-
-        const auto& region = result.regions.getReference(regionIndex);
-        const auto start = regionStartSample(region, breathEqSpectrumSampleRate, breathEqSpectrumSourceBuffer.getNumSamples());
-        const auto end = regionEndSample(region, breathEqSpectrumSampleRate, breathEqSpectrumSourceBuffer.getNumSamples());
-        auto peak = 0.0f;
-        for (auto channel = 0; channel < breathEqSpectrumSourceBuffer.getNumChannels(); ++channel)
-        {
-            const auto* data = breathEqSpectrumSourceBuffer.getReadPointer(channel);
-            for (auto sample = start; sample < end; ++sample)
-                peak = juce::jmax(peak, std::abs(data[static_cast<int>(sample)]));
-        }
-
-        cached = static_cast<double>(peak);
-        return cached;
-    };
-
     const auto centerSample = static_cast<juce::int64>(std::llround(localSeconds * breathEqSpectrumSampleRate));
     const auto startSample = centerSample - fftSize / 2;
+    struct SpectrumRegion
+    {
+        juce::int64 start, end;
+        bool adjacentBefore, adjacentAfter;
+        double normGain, gain;
+        double weight(juce::int64 sample, int fadeInSamples, int fadeOutSamples) const
+        {
+    if (sample >= start && sample < end)
+    {
+        auto weight = 1.0;
+        if (fadeInSamples > 0 && ! adjacentBefore)
+            weight = juce::jmin(weight, static_cast<double>(sample - start) / juce::jmax(1, fadeInSamples - 1));
+
+        if (fadeOutSamples > 0 && ! adjacentAfter)
+            weight = juce::jmin(weight, static_cast<double>(end - 1 - sample) / juce::jmax(1, fadeOutSamples - 1));
+
+        return juce::jlimit(0.0, 1.0, weight);
+    }
+
+    if (adjacentBefore && sample >= start - fadeInSamples && sample < start)
+        return juce::jlimit(0.0, 1.0, static_cast<double>(sample - (start - fadeInSamples)) / juce::jmax(1, fadeInSamples));
+
+    if (adjacentAfter && sample >= end && sample < end + fadeOutSamples)
+        return juce::jlimit(0.0, 1.0, 1.0 - static_cast<double>(sample - end) / juce::jmax(1, fadeOutSamples));
+
+    return 0.0;
+
+        }
+    };
+    std::vector<SpectrumRegion> candidates;
+    for (auto regionIndex = 0; regionIndex < result.regions.size(); ++regionIndex)
+    {
+        const auto& region = result.regions.getReference(regionIndex);
+        if (qqNormalizedRegionType(region.type) != analysisType || (detailPage && regionIndex != selectedRegionIndex)) continue;
+        const auto start = regionStartSample(region, breathEqSpectrumSampleRate, breathEqSpectrumSourceBuffer.getNumSamples());
+        const auto end = regionEndSample(region, breathEqSpectrumSampleRate, breathEqSpectrumSourceBuffer.getNumSamples());
+        if (start - fadeInSamples >= startSample + fftSize || end + fadeOutSamples <= startSample) continue;
+        auto norm = 1.0;
+        if (normalizeSelected)
+        {
+            const auto key = std::make_pair(start, end);
+            auto found = breathEqSpectrumPeakMemo.find(key);
+            if (found == breathEqSpectrumPeakMemo.end())
+            {
+                const auto count = static_cast<int>(juce::jmax<juce::int64>(0, end - start));
+                const auto peak = count > 0 ? breathEqSpectrumSourceBuffer.getMagnitude(static_cast<int>(start), count) : 0.0f;
+                found = breathEqSpectrumPeakMemo.emplace(key, static_cast<double>(peak)).first;
+            }
+            if (found->second > 1.0e-9) norm = targetGain / found->second;
+        }
+        candidates.push_back({ start, end,
+            fadeInSamples > 0 && hasAdjacentRegionBefore(result.regions, regionIndex, start, fadeInSamples, breathEqSpectrumSampleRate, breathEqSpectrumSourceBuffer.getNumSamples()),
+            fadeOutSamples > 0 && hasAdjacentRegionAfter(result.regions, regionIndex, end, fadeOutSamples, breathEqSpectrumSampleRate, breathEqSpectrumSourceBuffer.getNumSamples()),
+            norm, dbToGain(juce::jlimit(-30.0, 30.0, detailPage ? 0.0 : region.gainDb)) });
+    }
     auto hasBreath = false;
 
     for (auto i = 0; i < fftSize; ++i)
@@ -2864,34 +2886,14 @@ void QQDeBreathAudioProcessorEditor::updateBreathEqDynamicSpectrum()
         double breathNormGain = 1.0;
         double regionGain = 1.0;
 
-        for (auto regionIndex = 0; regionIndex < result.regions.size(); ++regionIndex)
+        for (const auto& region : candidates)
         {
-            const auto& region = result.regions.getReference(regionIndex);
-            if (qqNormalizedRegionType(region.type) != analysisType)
-                continue;
-
-            if (detailPage && regionIndex != selectedRegionIndex)
-                continue;
-
-            const auto weight = regionWeightForIndex(result.regions,
-                                                     regionIndex,
-                                                     sourceSample,
-                                                     breathEqSpectrumSampleRate,
-                                                     breathEqSpectrumSourceBuffer.getNumSamples(),
-                                                     fadeInSamples,
-                                                     fadeOutSamples);
-            if (weight >= breathWeight)
+            const auto weight = region.weight(sourceSample, fadeInSamples, fadeOutSamples);
+            if (weight > 0.0 && weight >= breathWeight)
             {
                 breathWeight = weight;
-                const auto previewGainDb = detailPage && regionIndex == selectedRegionIndex
-                                         ? 0.0
-                                         : region.gainDb;
-                regionGain = dbToGain(juce::jlimit(-30.0, 30.0, previewGainDb));
-                if (normalizeSelected)
-                {
-                    const auto peak = peakForRegion(regionIndex);
-                    breathNormGain = peak > 1.0e-9 ? targetGain / peak : 1.0;
-                }
+                breathNormGain = region.normGain;
+                regionGain = region.gain;
             }
         }
 

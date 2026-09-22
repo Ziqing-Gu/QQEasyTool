@@ -1,0 +1,4 @@
+QQEasyTool 1.05 Candidate
+Internal version: 1.0.5
+Based on 1.04 Stable.
+Gain/Norm Target and EQ Auto Apply responsiveness; audio/routing/transport preserved.

@@ -371,6 +371,7 @@ private:
     juce::String breathEqSpectrumSourceKey;
     double breathEqSpectrumSampleRate = 0.0;
     juce::AudioBuffer<float> breathEqSpectrumSourceBuffer;
+    std::map<std::pair<juce::int64, juce::int64>, double> breathEqSpectrumPeakMemo;
     std::vector<float> globalPreSpectrumPeak;
     std::vector<float> globalPostSpectrumPeak;
     std::vector<float> detailPreSpectrumPeak;

@@ -1,0 +1,10 @@
+{
+  "version": "1.05",
+  "internalVersion": "1.0.5",
+  "status": "Candidate",
+  "basedOn": "1.04 Stable",
+  "userAccepted": false,
+  "windowsBuild": "passed",
+  "installed": true,
+  "installationVersion": "1.0.5"
+}
