@@ -32,19 +32,19 @@ Validation: Windows x64 VST3 build and Steinberg load check passed. 30 reference
 
 
 
-## 下载 / Downloads — 1.04 Stable
+## 下载 / Downloads — 1.05
 
-**[最新正式版 / Latest Release](https://github.com/Ziqing-Gu/QQEasyTool/releases/latest)** · [固定版本 / v1.04](https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.04)
+**[最新正式版 / Latest Release](https://github.com/Ziqing-Gu/QQEasyTool/releases/latest)** · [固定版本 / v1.05](https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.05)
 
 | 文件 / Actual release asset | 选择说明 / Use |
 |---|---|
-| [QQEasyTool-1.04-Complete-Source.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-1.04-Complete-Source.zip) | 完整对应源码，不能直接安装 / Complete source, not an installer |
-| [QQEasyTool-1.04-Windows-macOS-INSTALL-ZH-CN.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-1.04-Windows-macOS-INSTALL-ZH-CN.txt) | 中文安装与升级说明 / Chinese installation guide |
-| [QQEasyTool-1.04-Windows-macOS-INSTALL.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-1.04-Windows-macOS-INSTALL.txt) | English installation / upgrade guide / 英文安装说明 |
-| [QQEasyTool-macOS-Apple-Silicon-1.04.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-macOS-Apple-Silicon-1.04.zip) | Apple Silicon 原生宿主 / native arm64 host — VST3 |
-| [QQEasyTool-macOS-AU-Universal-1.04.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-macOS-AU-Universal-1.04.zip) | macOS Universal 2 (arm64 + x86_64) — AU / Logic Pro |
-| [QQEasyTool-macOS-Intel-1.04.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-macOS-Intel-1.04.zip) | Intel 或 Rosetta x86_64 宿主 / Intel or Rosetta host — VST3 |
-| [QQEasyTool-Windows-x64-1.04.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.04/QQEasyTool-Windows-x64-1.04.zip) | Windows 10/11 x64 — VST3 |
+| [QQEasyTool-1.05-Complete-Source.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-1.05-Complete-Source.zip) | 完整对应源码，不能直接安装 / Complete source, not an installer |
+| [QQEasyTool-1.05-Windows-macOS-INSTALL-ZH-CN.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-1.05-Windows-macOS-INSTALL-ZH-CN.txt) | 中文安装与升级说明 / Chinese installation guide |
+| [QQEasyTool-1.05-Windows-macOS-INSTALL.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-1.05-Windows-macOS-INSTALL.txt) | English installation / upgrade guide / 英文安装说明 |
+| [QQEasyTool-macOS-Apple-Silicon-1.05.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-macOS-Apple-Silicon-1.05.zip) | Apple Silicon 原生宿主 / native arm64 host — VST3 |
+| [QQEasyTool-macOS-AU-Universal-1.05.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-macOS-AU-Universal-1.05.zip) | macOS Universal 2 (arm64 + x86_64) — AU / Logic Pro |
+| [QQEasyTool-macOS-Intel-1.05.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-macOS-Intel-1.05.zip) | Intel 或 Rosetta x86_64 宿主 / Intel or Rosetta host — VST3 |
+| [QQEasyTool-Windows-x64-1.05.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-Windows-x64-1.05.zip) | Windows 10/11 x64 — VST3 |
 
 Windows 用户选择 Windows x64 VST3。Mac VST3 只选匹配宿主运行架构的一包；Logic Pro 使用 AU。按需安装格式，避免重复副本。Linux 本次不提供。
 Windows users need Windows x64 VST3. Mac VST3 users should select one package matching the host's running architecture; Logic Pro uses AU. Install only required formats and avoid duplicate copies. Linux is not provided.

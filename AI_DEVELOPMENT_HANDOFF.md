@@ -44,3 +44,8 @@ Validation: Windows x64 VST3 build and Steinberg load check passed. 30 reference
 ## 2026-09-22 — 1.05 Plan B / C / D authorized
 User requested Plan B, followed by Plan C and D after DeBreath completes. DeBreath 1.25 Plan C/D completion was verified from its existing output records. Inherit the completed Windows 1.05 build/tests/installation without rebuilding or reinstalling. The user authorized public release of 1.05; no new explicit Stable designation or real-host acceptance is inferred. Stable remains 1.04.
 Plan B snapshot: [machine-local paths retained in private verification records]
+
+## 2026-09-22 — 1.05 public build source
+Current 1.05 binary source: 696cdecee6aaca0d8dd02a8ce7b8614c900bf7bb in Ziqing-Gu/QQEasyTool. Windows reuses the verified 1.05 build; the public source matches its compiled source, allowing only CRLF/LF normalization. ARA SDK commit 0005c532bb03eb210e7bb490329fc6d7ba1792c7 and JUCE 8.0.13 are preserved. Plan B is frozen and not revisited. Publication is authorized; Stable remains 1.04 until explicitly designated otherwise.
+
+1.05 delivery: all three macOS builds passed architecture and ad-hoc signature verification. Windows Actions was skipped and the existing Windows output reused. Six actual desktop files (four platform archives and two guides) were verified. No separate manual is included, as requested. Release v1.05 contains seven assets including complete source with ARA SDK and JUCE; uploaded names, sizes and hashes match. No new Stable designation or host acceptance is inferred.
