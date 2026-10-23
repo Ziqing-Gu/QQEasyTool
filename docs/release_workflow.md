@@ -1,9 +1,12 @@
 # Release workflow / 发布流程
-Plan A: build and verify local Windows output.
-Plan B: one-time complete source snapshot; freeze after completion and never inspect/refresh it in later plans.
-Plan C: synchronize public source and bilingual history; reuse the verified local Windows output, build three macOS formats from the same code, verify all four packages, and deliver an actual desktop folder.
-Plan D: publish verified assets in this same public repository and maintain real direct-download links in README.
-Windows cloud CI is optional: manually dispatch build_windows=true only when explicitly requested. Documentation corrections reuse approved binaries and skip CI.
 
-Plan C 复用已验证本机 Windows 成品，GitHub 默认只构建三类 macOS。Plan D 发布本仓库 Release 与逐项下载入口。Plan B 完成后冻结，不能再次读取或刷新。
-本次补交不改变代码、不重新构建或安装。用户明确要求 QQEasyTool 不附加独立说明书。
+Current Stable: 1.06; previous designated Stable: 1.04; immediate installed rollback: 1.05.
+1.06 follows the user's explicit Windows-only request: validated Windows build, installation, Stable designation, a new frozen Plan B, public source sync and Windows Release upload. No Mac artifacts are produced and no full cross-platform Plan C is claimed.
+
+Plan B is a one-time source snapshot. Once complete, never access, enumerate, rehash or refresh it during later work. Reuse completed builds/tests; documentation-only corrections do not trigger new versions, builds or backups.
+
+The workflow requires explicit manual build_macos=true for Mac jobs and build_windows=true for Windows cloud reproduction. Both default to false. This 1.06 publication uses [skip ci]; no Actions run was triggered.
+
+Follow the user's current Plan specification for future full cross-platform Plan C/D requests. Keep existing numerical version history and old Candidate labels as historical records. No separate user manual is added.
+
+当前 1.06 按用户要求只交付 Windows：完成本机验证、覆盖、Stable、新 Plan B 以及 GitHub 源码和成品上传。未运行 Mac 构建，不宣称完整跨平台 Plan C。后续 Mac 云构建须明确手动选择 build_macos=true。已完成的备份保持冻结；仅改发布文档不重建、不重备份。
