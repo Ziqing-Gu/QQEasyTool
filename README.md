@@ -13,12 +13,24 @@
 # QQEasyTool
 
 [中文](#中文) | [English](#english)
-当前稳定版本 / Current stable version: **1.04 Stable**
+当前稳定版本 / Current stable version: **1.06 Stable**
 
 
 
 
-当前发布目标 / Current release target: **1.05**（用户授权发布 / user-authorized publication）。此前明确指定的 Stable 为 1.04。
+当前发布目标 / Current release target: **1.06 Stable**（Windows only，用户指定 / user-designated）。
+
+## 1.06 Stable — 2026-10-24 / ARA multi-source cache and restore
+
+中文：修复同一 ARA 文档超过 32 个音源后最早素材被淘汰、渲染静音，以及恢复存档时清空全部有效音频缓存的问题。音源在宿主模型线程预载，按源的失活、销毁和内容更新管理缓存；不再由后台线程访问宿主模型。局部存档只恢复指定音源，支持持久 ID 重映射、工程级独立存档与未分析音源；离线渲染不再依赖 Playing 标志。编辑器复用已有缓存。保留 Voice/Breath/Noise/Others 路由、旧 Sibilance 转 Others、重叠混音、Norm/Gain/EQ、1.04 普通 VST3 定位和 1.05 界面响应优化。
+
+English: Fixed older sources being evicted after an ARA document exceeds 32 sources, causing silent rendering, and valid raw audio being discarded during archive restore. Audio preloads on the host model thread and follows source deactivation, destruction and content updates; background threads no longer traverse host model objects. Filtered restore preserves unrelated sources and handles persistent-ID remapping, document-only archives and untouched sources. Offline render does not require Playing; the editor reuses cached audio. Voice/Breath/Noise/Others routing, legacy Sibilance-to-Others mapping, overlap mixing, Norm/Gain/EQ, 1.04 ordinary VST3 transport and 1.05 display responsiveness are preserved.
+
+验证 / Validation: Unmodified 1.05 reproduced 32 audible / 12 silent sources from 22 renderers and 44 sources; archive restore discarded all 22 cached sources. 1.06 renders all 44 with no silent sources, retains valid caches, performs zero host reads during concurrent rendering, and passes source lifecycle/restore checks. 96 ARA DSP comparisons against frozen EasyTool 1.05 match sample-for-sample. Existing routing/state/ARA input, transport and 30 waveform reference cases pass. Actual VST3 loading and internal version 1.0.6 are verified. These automated checks are not original Studio One project acceptance.
+
+状态 / Status: Stable by explicit user instruction. Previous designated Stable: 1.04; immediate installed rollback: 1.05. This release contains Windows x64 VST3 only, as requested. No 1.06 macOS artifacts were built or reused from older versions. Original historical Candidate records remain historical; no new Candidate stage is used.
+
+边界 / Limits: Full-source caching scales with active audio duration and channel count. Initial loading and undo reactivation can wait for synchronous preloading. Failed reads never publish partial buffers and retry at subsequent model/load events. Previously rendered silent files require rerendering from original events. Archive schema and ordinary VST3 state format remain compatible.
 
 ## 1.05 Candidate — 2026-09-22 / Gain, Norm Target and EQ responsiveness
 
@@ -32,29 +44,20 @@ Validation: Windows x64 VST3 build and Steinberg load check passed. 30 reference
 
 
 
-## 下载 / Downloads — 1.05
+## 下载 / Downloads — 1.06 Stable (Windows only)
 
-**[最新正式版 / Latest Release](https://github.com/Ziqing-Gu/QQEasyTool/releases/latest)** · [固定版本 / v1.05](https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.05)
+**[最新正式版 / Latest Release](https://github.com/Ziqing-Gu/QQEasyTool/releases/latest)** · [v1.06](https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.06)
 
-| 文件 / Actual release asset | 选择说明 / Use |
-|---|---|
-| [QQEasyTool-1.05-Complete-Source.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-1.05-Complete-Source.zip) | 完整对应源码，不能直接安装 / Complete source, not an installer |
-| [QQEasyTool-1.05-Windows-macOS-INSTALL-ZH-CN.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-1.05-Windows-macOS-INSTALL-ZH-CN.txt) | 中文安装与升级说明 / Chinese installation guide |
-| [QQEasyTool-1.05-Windows-macOS-INSTALL.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-1.05-Windows-macOS-INSTALL.txt) | English installation / upgrade guide / 英文安装说明 |
-| [QQEasyTool-macOS-Apple-Silicon-1.05.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-macOS-Apple-Silicon-1.05.zip) | Apple Silicon 原生宿主 / native arm64 host — VST3 |
-| [QQEasyTool-macOS-AU-Universal-1.05.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-macOS-AU-Universal-1.05.zip) | macOS Universal 2 (arm64 + x86_64) — AU / Logic Pro |
-| [QQEasyTool-macOS-Intel-1.05.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-macOS-Intel-1.05.zip) | Intel 或 Rosetta x86_64 宿主 / Intel or Rosetta host — VST3 |
-| [QQEasyTool-Windows-x64-1.05.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.05/QQEasyTool-Windows-x64-1.05.zip) | Windows 10/11 x64 — VST3 |
+- [QQEasyTool-Windows-x64-1.06.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.06/QQEasyTool-Windows-x64-1.06.zip)
+- [QQEasyTool-1.06-Complete-Source.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.06/QQEasyTool-1.06-Complete-Source.zip)
+- [QQEasyTool-1.06-Windows-INSTALL-ZH-CN.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.06/QQEasyTool-1.06-Windows-INSTALL-ZH-CN.txt)
+- [QQEasyTool-1.06-Windows-INSTALL.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.06/QQEasyTool-1.06-Windows-INSTALL.txt)
 
-Windows 用户选择 Windows x64 VST3。Mac VST3 只选匹配宿主运行架构的一包；Logic Pro 使用 AU。按需安装格式，避免重复副本。Linux 本次不提供。
-Windows users need Windows x64 VST3. Mac VST3 users should select one package matching the host's running architecture; Logic Pro uses AU. Install only required formats and avoid duplicate copies. Linux is not provided.
+按用户要求仅提供 Windows x64 VST3，不生成 1.06 Mac 成品。旧 Mac 成品保留在历史 Release，不能称为 1.06。
+Windows x64 VST3 only, as requested. Older Mac packages remain in historical releases and are not 1.06 builds.
 
-**GitHub 自动生成的 Source code (zip) / Source code (tar.gz) 是源码快照，不是可直接安装的插件。**
-**GitHub's automatic Source code (zip) / Source code (tar.gz) archives are source snapshots, not installable plug-ins.**
-完整复现源码使用 Complete-Source.zip（含 ARA SDK 和 JUCE），安装插件则选择平台 ZIP。
-For rebuilding use Complete-Source.zip with ARA SDK/JUCE; for installation choose a platform ZIP.
-按用户要求，本发行不附加独立用户手册。安装和基本操作见双语安装说明与下文。
-As requested, this release has no separate user manual; see the bilingual installation guides and the documentation below.
+GitHub 自动生成的 Source code (zip) / Source code (tar.gz) 是源码，不是可安装插件。完整复现请使用包含 ARA SDK 和 JUCE 的 Complete-Source.zip。
+GitHub automatic Source code (zip) / Source code (tar.gz) are not installable plugins; Complete-Source.zip includes ARA SDK and JUCE for rebuilding. No separate manual is added.
 
 ## 1.04 更新 / What's new in 1.04 — 2026-09-20
 

@@ -3571,53 +3571,7 @@ bool QQDeBreathAudioProcessorEditor::cacheAraSourceForPlayback(juce::ARAAudioSou
         return false;
     }
 
-    if (! source.isSampleAccessEnabled())
-    {
-        status = "ARA sample access is not enabled for playback cache.";
-        return false;
-    }
-
-    const auto sampleRate = source.getSampleRate();
-    const auto channels = static_cast<int>(source.getChannelCount());
-    const auto samples64 = static_cast<juce::int64>(source.getSampleCount());
-    if (sampleRate <= 0.0 || channels <= 0 || samples64 <= 0
-        || samples64 > std::numeric_limits<int>::max())
-    {
-        status = "ARA source is too large or invalid for realtime playback cache.";
-        return false;
-    }
-
-    auto audio = std::make_shared<juce::AudioBuffer<float>>(channels, static_cast<int>(samples64));
-    audio->clear();
-
-    juce::ARAAudioSourceReader reader(&source);
-    if (! reader.isValid())
-    {
-        status = "Could not create ARA reader for playback cache.";
-        return false;
-    }
-
-    constexpr int blockSize = 65536;
-    for (juce::int64 position = 0; position < samples64;)
-    {
-        const auto samplesThisBlock = static_cast<int>(juce::jmin<juce::int64>(blockSize, samples64 - position));
-        if (! reader.read(audio.get(),
-                          static_cast<int>(position),
-                          samplesThisBlock,
-                          position,
-                          true,
-                          true))
-        {
-            status = "Failed while preloading ARA source for realtime playback.";
-            return false;
-        }
-
-        position += samplesThisBlock;
-    }
-
-    documentController->setSourceAudioCache(buildAraSourceFingerprint(source), sampleRate, audio);
-    status = "ARA source preloaded for realtime playback.";
-    return true;
+    return documentController->cacheSourceAudioForPlayback(source, status);
 }
 double QQDeBreathAudioProcessorEditor::getAraLocalPlayheadSeconds(double hostTimeSeconds) const
 {

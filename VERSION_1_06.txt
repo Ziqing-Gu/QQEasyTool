@@ -1,0 +1,6 @@
+QQEasyTool 1.06 Stable
+Internal version: 1.0.6
+Date: 2026-10-24
+User-designated Stable. Previous Stable: 1.04; immediate installed rollback: 1.05.
+ARA multi-source cache/lifecycle, filtered archive restore and stopped-flag offline rendering fix.
+Windows validation passed; no new macOS artifacts. See CHANGELOG for scope and limitations.

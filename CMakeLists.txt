@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(QQEasyTool VERSION 1.0.5 LANGUAGES CXX)
+project(QQEasyTool VERSION 1.0.6 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -37,6 +37,10 @@ else()
     message(WARNING "ARA SDK not found at QQDEBREATH_ARA_SDK_PATH='${QQDEBREATH_ARA_SDK_PATH}'. Unified QQDeBreath ARA support requires the ARA SDK.")
 endif()
 
+if(EXISTS "${QQDEBREATH_ARA_SDK_PATH}/ARA_Library/CMakeLists.txt" AND NOT TARGET ARA_PlugIn_Library)
+    add_subdirectory("${QQDEBREATH_ARA_SDK_PATH}/ARA_Library" "${CMAKE_CURRENT_BINARY_DIR}/ARA_Library" EXCLUDE_FROM_ALL)
+endif()
+
 set(QQDEBREATH_PLUGIN_FORMATS VST3)
 if(APPLE)
     list(APPEND QQDEBREATH_PLUGIN_FORMATS AU)
@@ -58,6 +62,15 @@ juce_add_plugin(QQEasyTool
     COPY_PLUGIN_AFTER_BUILD ${QQDEBREATH_COPY_AFTER_BUILD}
     VST3_CATEGORIES Fx
 )
+
+# JUCE 8.0.13's Windows resource command does not depend on Info.txt. Add the
+# dependency so an incremental version bump also updates PE File/ProductVersion.
+if(WIN32 AND TARGET QQEasyTool_rc_lib)
+    get_target_property(QQDEBREATH_GENERATED_CODE QQEasyTool JUCE_GENERATED_SOURCES_DIRECTORY)
+    get_target_property(QQDEBREATH_VERSION_INFO QQEasyTool JUCE_INFO_FILE)
+    add_custom_command(OUTPUT "${QQDEBREATH_GENERATED_CODE}/QQEasyTool_resources.rc"
+        APPEND DEPENDS "${QQDEBREATH_VERSION_INFO}")
+endif()
 
 target_sources(QQEasyTool
     PRIVATE
@@ -233,4 +246,24 @@ if(QQEASYTOOL_BUILD_WAVEFORM_DISPLAY_PROBE)
     endif()
     target_link_libraries(qq_easytool_waveform_display_probe PRIVATE juce::juce_audio_utils juce::juce_dsp
         PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+endif()
+
+option(QQEASYTOOL_BUILD_ARA_MULTI_PROBE "Build real ARA multi-instance regression" ON)
+if(QQEASYTOOL_BUILD_ARA_MULTI_PROBE)
+    add_executable(qq_easytool_ara_multi_instance_probe tests/AraMultiInstanceProbe.cpp)
+    target_include_directories(qq_easytool_ara_multi_instance_probe PRIVATE src tests)
+    target_compile_features(qq_easytool_ara_multi_instance_probe PRIVATE cxx_std_17)
+    if(MSVC)
+        target_compile_options(qq_easytool_ara_multi_instance_probe PRIVATE /utf-8)
+    endif()
+    target_link_libraries(qq_easytool_ara_multi_instance_probe PRIVATE QQEasyTool ARA_PlugIn_Library ARA_Host_Library juce::juce_audio_plugin_client juce::juce_audio_utils juce::juce_dsp)
+endif()
+option(QQEASYTOOL_BUILD_BASELINE_105 "Build the 1.05 fault reproduction probe only against unmodified 1.05 product source" OFF)
+if(QQEASYTOOL_BUILD_BASELINE_105)
+    add_executable(qq_easytool_ara_baseline_105 tests/AraMultiInstanceBaseline105.cpp)
+    target_include_directories(qq_easytool_ara_baseline_105 PRIVATE src tests)
+    if(MSVC)
+        target_compile_options(qq_easytool_ara_baseline_105 PRIVATE /utf-8)
+    endif()
+    target_link_libraries(qq_easytool_ara_baseline_105 PRIVATE QQEasyTool ARA_PlugIn_Library ARA_Host_Library juce::juce_audio_plugin_client juce::juce_audio_utils juce::juce_dsp)
 endif()

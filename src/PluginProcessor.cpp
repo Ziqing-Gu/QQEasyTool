@@ -507,15 +507,26 @@ public:
         nextSourceCache = 0;
         cachedPlaybackParams = owner.getPlaybackParams();
         cachedPlaybackParamsRevision = owner.getPlaybackParamsRevision();
+        for (auto* region : getPlaybackRegions<juce::ARAPlaybackRegion>())
+            if (region != nullptr && region->getAudioModification() != nullptr)
+                if (auto* source = region->getAudioModification()->getAudioSource<juce::ARAAudioSource>())
+                    getSourceCache(*source);
+    }
+
+    void releaseResources() override
+    {
+        sourceCaches = {};
+        nextSourceCache = 0;
+        juce::ARAPlaybackRenderer::releaseResources();
     }
 
     bool processBlock(juce::AudioBuffer<float>& buffer,
-                      juce::AudioProcessor::Realtime /*realtime*/,
+                      juce::AudioProcessor::Realtime realtime,
                       const juce::AudioPlayHead::PositionInfo& positionInfo) noexcept override
     {
         buffer.clear();
 
-        if (! positionInfo.getIsPlaying() || sampleRate <= 0.0)
+        if ((! positionInfo.getIsPlaying() && realtime == juce::AudioProcessor::Realtime::yes) || sampleRate <= 0.0)
             return true;
 
         juce::int64 blockStart = 0;
@@ -801,7 +812,7 @@ private:
             return true;
         }
 
-        // The realtime callback never reads ARA source data. Audio is immutable and preloaded by the controller worker.
+        // The realtime callback never reads ARA source data. Audio is immutable and preloaded on the host model thread.
         return false;
     }
     SourceRuntimeCache& getSourceCache(juce::ARAAudioSource& source) noexcept
@@ -899,168 +910,122 @@ private:
 
 } // namespace
 
-class QQDeBreathARADocumentController::CacheWarmupThread final : public juce::Thread
+QQDeBreathARADocumentController::~QQDeBreathARADocumentController() = default;
+
+bool QQDeBreathARADocumentController::cacheSourceAudioForPlayback(juce::ARAAudioSource& source,
+                                                                 juce::String& status)
 {
-public:
-    explicit CacheWarmupThread(QQDeBreathARADocumentController& ownerIn)
-        : juce::Thread("QQEasyTool ARA source cache warmup"),
-          owner(ownerIn)
+    // ARA readers and model objects are owned by the host's model thread. Complete
+    // missing reads before returning control to the host, never on its render callback.
+    const auto fingerprint = buildAraSourceFingerprint(source);
+    QQDeBreathARASourceAudioBuffer existing;
+    double existingRate = 0.0;
+    bool found = false;
+    if (tryGetSourceAudioCache(fingerprint, existing, existingRate, found) && found)
     {
+        status = "ARA source ready for playback.";
+        return true;
     }
-
-    void trigger()
+    if (!source.isSampleAccessEnabled() || source.isDeactivatedForUndoHistory())
     {
-        pending.store(true, std::memory_order_release);
-        notify();
+        status = "ARA sample access is not enabled for playback cache.";
+        return false;
     }
-
-    void run() override
+    const auto rate = source.getSampleRate();
+    const auto channels = static_cast<int>(source.getChannelCount());
+    const auto samples = static_cast<juce::int64>(source.getSampleCount());
+    if (rate <= 0 || channels <= 0 || samples <= 0 || samples > std::numeric_limits<int>::max())
     {
-        while (! threadShouldExit())
+        status = "ARA source is too large or invalid for playback cache.";
+        return false;
+    }
+    try
+    {
+        juce::ARAAudioSourceReader reader(&source);
+        if (!reader.isValid()) { status = "Could not create ARA reader for playback cache."; return false; }
+        auto audio = std::make_shared<juce::AudioBuffer<float>>(channels, static_cast<int>(samples));
+        constexpr int blockSize = 65536;
+        for (juce::int64 position = 0; position < samples; position += blockSize)
         {
-            wait(-1);
-            if (threadShouldExit())
-                break;
-
-            if (! pending.exchange(false, std::memory_order_acq_rel))
-                continue;
-
-            for (auto attempt = 0; attempt < 120 && ! threadShouldExit(); ++attempt)
+            const auto count = static_cast<int>(juce::jmin<juce::int64>(blockSize, samples - position));
+            if (!reader.read(audio.get(), static_cast<int>(position), count, position, true, true))
             {
-                const auto complete = owner.warmSourceAudioCaches([this] { return threadShouldExit(); });
-                if (complete)
-                    break;
-
-                wait(100);
+                status = "Failed while preloading ARA source for playback.";
+                return false;
             }
         }
+        setSourceAudioCache(fingerprint, rate, std::move(audio));
+        status = "ARA source preloaded for playback.";
+        return true;
     }
-
-private:
-    QQDeBreathARADocumentController& owner;
-    std::atomic<bool> pending { false };
-};
-
-QQDeBreathARADocumentController::~QQDeBreathARADocumentController()
-{
-    std::unique_ptr<CacheWarmupThread> thread;
-    {
-        const juce::ScopedLock lock(cacheWarmupThreadLock);
-        thread = std::move(cacheWarmupThread);
-    }
-
-    if (thread != nullptr)
-        thread->stopThread(3000);
+    catch (const std::exception& e) { status = "ARA preload failed: " + juce::String(e.what()); }
+    catch (...) { status = "ARA preload failed."; }
+    return false;
 }
 
 void QQDeBreathARADocumentController::requestSourceAudioCacheWarmup()
 {
-    const juce::ScopedLock lock(cacheWarmupThreadLock);
-    if (cacheWarmupThread == nullptr)
-    {
-        cacheWarmupThread = std::make_unique<CacheWarmupThread>(*this);
-        cacheWarmupThread->startThread();
-    }
-
-    cacheWarmupThread->trigger();
+    if (auto* document = getDocumentController()->getDocument<juce::ARADocument>())
+        for (auto* source : document->getAudioSources<juce::ARAAudioSource>())
+            if (source->isSampleAccessEnabled() && !source->isDeactivatedForUndoHistory())
+            {
+                juce::String status;
+                cacheSourceAudioForPlayback(*source, status);
+            }
 }
 
-bool QQDeBreathARADocumentController::warmSourceAudioCaches(
-    const std::function<bool()>& shouldExit)
+void QQDeBreathARADocumentController::removeSourceAudioCache(const juce::String& fingerprint)
 {
-    juce::StringArray requiredFingerprints;
+    const juce::ScopedLock lock(sourceAudioCacheLock);
+    for (auto i = sourceAudioCaches.size(); --i >= 0;)
+        if (sourceAudioCaches.getReference(i).sourceFingerprint == fingerprint)
+            sourceAudioCaches.remove(i);
+    sourceAudioCacheRevision.fetch_add(1, std::memory_order_release);
+}
+
+void QQDeBreathARADocumentController::didEndEditing(juce::ARADocument*)
+{
+    requestSourceAudioCacheWarmup();
+}
+
+void QQDeBreathARADocumentController::didEnableAudioSourceSamplesAccess(juce::ARAAudioSource* source, bool enable)
+{
+    if (enable) { juce::String status; cacheSourceAudioForPlayback(*source, status); }
+}
+
+void QQDeBreathARADocumentController::didDeactivateAudioSourceForUndoHistory(juce::ARAAudioSource* source, bool deactivate)
+{
+    if (deactivate) removeSourceAudioCache(buildAraSourceFingerprint(*source));
+    else { juce::String status; cacheSourceAudioForPlayback(*source, status); }
+}
+
+void QQDeBreathARADocumentController::willDestroyAudioSource(juce::ARAAudioSource* source)
+{
+    removeSourceAudioCache(buildAraSourceFingerprint(*source));
+}
+
+void QQDeBreathARADocumentController::willUpdateAudioSourceProperties(juce::ARAAudioSource* source,
+                                                                      juce::ARAAudioSource::PropertiesPtr properties)
+{
+    if (source->getSampleRate() != properties->sampleRate || source->getSampleCount() != properties->sampleCount
+        || source->getChannelCount() != properties->channelCount || source->getPersistentID() != properties->persistentID)
+        removeSourceAudioCache(buildAraSourceFingerprint(*source));
+}
+
+void QQDeBreathARADocumentController::didUpdateAudioSourceProperties(juce::ARAAudioSource* source)
+{
+    if (source->isSampleAccessEnabled()) { juce::String status; cacheSourceAudioForPlayback(*source, status); }
+}
+
+void QQDeBreathARADocumentController::doUpdateAudioSourceContent(juce::ARAAudioSource* source,
+                                                               juce::ARAContentUpdateScopes scope)
+{
+    if (scope.affectSamples())
     {
-        const juce::ScopedLock lock(persistentStateLock);
-        for (const auto& state : persistentStates)
-        {
-            if (state.sourceInfo.sourceFingerprint.isNotEmpty())
-                requiredFingerprints.addIfNotAlreadyThere(state.sourceInfo.sourceFingerprint);
-
-            for (const auto& mapping : state.sourceInfo.playbackMappings)
-                if (mapping.sourceFingerprint.isNotEmpty())
-                    requiredFingerprints.addIfNotAlreadyThere(mapping.sourceFingerprint);
-        }
+        removeSourceAudioCache(buildAraSourceFingerprint(*source));
+        juce::String status;
+        cacheSourceAudioForPlayback(*source, status);
     }
-
-    if (requiredFingerprints.isEmpty())
-        return true;
-
-    auto* document = getDocumentController()->getDocument<juce::ARADocument>();
-    if (document == nullptr)
-        return false;
-
-    const auto sources = document->getAudioSources<juce::ARAAudioSource>();
-    for (auto* source : sources)
-    {
-        if (shouldExit())
-            return false;
-
-        if (source == nullptr)
-            continue;
-
-        const auto fingerprint = buildAraSourceFingerprint(*source);
-        if (! requiredFingerprints.contains(fingerprint))
-            continue;
-
-        QQDeBreathARASourceAudioBuffer cachedAudio;
-        auto cachedSampleRate = 0.0;
-        auto found = false;
-        if (tryGetSourceAudioCache(fingerprint, cachedAudio, cachedSampleRate, found) && found)
-            continue;
-
-        if (! source->isSampleAccessEnabled())
-            continue;
-
-        const auto sampleRate = source->getSampleRate();
-        const auto channels = static_cast<int>(source->getChannelCount());
-        const auto samples64 = static_cast<juce::int64>(source->getSampleCount());
-        if (sampleRate <= 0.0 || channels <= 0 || samples64 <= 0
-            || samples64 > static_cast<juce::int64>(std::numeric_limits<int>::max()))
-            continue;
-
-        auto audio = std::make_shared<juce::AudioBuffer<float>>(channels, static_cast<int>(samples64));
-        audio->clear();
-
-        juce::ARAAudioSourceReader reader(source);
-        if (! reader.isValid())
-            continue;
-
-        constexpr juce::int64 blockSize = 65536;
-        auto failed = false;
-        for (juce::int64 position = 0; position < samples64;)
-        {
-            if (shouldExit())
-                return false;
-
-            const auto samplesThisBlock = static_cast<int>(juce::jmin(blockSize, samples64 - position));
-            if (! reader.read(audio.get(),
-                              static_cast<int>(position),
-                              samplesThisBlock,
-                              position,
-                              true,
-                              true))
-            {
-                failed = true;
-                break;
-            }
-
-            position += samplesThisBlock;
-        }
-
-        if (! failed)
-            setSourceAudioCache(fingerprint, sampleRate, audio);
-    }
-
-    for (const auto& fingerprint : requiredFingerprints)
-    {
-        QQDeBreathARASourceAudioBuffer cachedAudio;
-        auto cachedSampleRate = 0.0;
-        auto found = false;
-        if (! tryGetSourceAudioCache(fingerprint, cachedAudio, cachedSampleRate, found) || ! found)
-            return false;
-    }
-
-    return true;
 }
 
 QQDeBreathAudioProcessor::QQDeBreathAudioProcessor()
@@ -2788,8 +2753,6 @@ void QQDeBreathARADocumentController::setSourceAudioCache(
 
         if (! replaced)
         {
-            if (sourceAudioCaches.size() >= 32)
-                sourceAudioCaches.remove(0);
             sourceAudioCaches.add({ sourceFingerprint, sampleRate, std::move(audio) });
         }
     }
@@ -2858,58 +2821,161 @@ bool QQDeBreathARADocumentController::tryGetPlaybackParams(QQDeBreathARAPlayback
 bool QQDeBreathARADocumentController::doRestoreObjectsFromStream(juce::ARAInputStream& input,
                                                                  const juce::ARARestoreObjectsFilter* filter) noexcept
 {
-    juce::ignoreUnused(filter);
-
-    auto restored = juce::Array<QQDeBreathARAPersistentState>();
+    juce::Array<QQDeBreathARAPersistentState> archived;
     QQDeBreathARAPlaybackParams restoredParams;
     const auto payload = input.readString();
-    if (! deserializeAraPersistentStates(payload, restored, restoredParams))
+    if (input.failed() || !deserializeAraPersistentStates(payload, archived, restoredParams))
         return false;
 
+    auto* document = getDocumentController()->getDocument<juce::ARADocument>();
+    if (document == nullptr) return false;
+    const auto restoreDocument = filter == nullptr || filter->shouldRestoreDocumentData();
+    const auto targetFor = [&](const juce::String& id) -> juce::ARAAudioSource*
+    {
+        if (filter != nullptr)
+            return filter->getAudioSourceToRestoreStateWithID<juce::ARAAudioSource>(id.toRawUTF8());
+        for (auto* source : document->getAudioSources<juce::ARAAudioSource>())
+            if (source->getPersistentID() == id.toStdString()) return source;
+        return nullptr;
+    };
+    juce::StringArray selected;
+    for (auto* source : document->getAudioSources<juce::ARAAudioSource>())
+        if (auto* target = targetFor(juce::String::fromUTF8(source->getPersistentID().c_str())))
+            selected.addIfNotAlreadyThere(buildAraSourceFingerprint(*target));
+
+    juce::Array<QQDeBreathARAPersistentState> restored;
+    for (auto state : archived)
+    {
+        auto& info = state.sourceInfo;
+        if (info.isComposite)
+        {
+            // Composite entries are editor snapshots. Real per-source DSP entries are
+            // stored separately. Keep a snapshot only when all its IDs map unchanged.
+            if (!restoreDocument || info.playbackMappings.isEmpty()) continue;
+            bool complete = true;
+            for (const auto& mapping : info.playbackMappings)
+            {
+                // A document-only archive is restored last, after source archives.
+                // Its editor snapshots may refer to sources outside this source filter.
+                juce::ARAAudioSource* target = nullptr;
+                for (auto* live : document->getAudioSources<juce::ARAAudioSource>())
+                    if (live->getPersistentID() == mapping.persistentId.toStdString()) target = live;
+                if (target == nullptr || buildAraSourceFingerprint(*target) != mapping.sourceFingerprint)
+                    complete = false;
+            }
+            if (!complete) continue;
+        }
+        else
+        {
+            auto* target = targetFor(info.persistentId);
+            if (target == nullptr) continue;
+            const auto fingerprint = buildAraSourceFingerprint(*target);
+            selected.addIfNotAlreadyThere(fingerprint);
+            // Analysis positions belong to the original sample geometry.
+            if (info.sampleRate != target->getSampleRate() || info.numSamples != target->getSampleCount()
+                || info.channelCount != static_cast<int>(target->getChannelCount()))
+                continue;
+            if (fingerprint != info.sourceFingerprint) info.exportedWav = juce::File {};
+            info.persistentId = juce::String::fromUTF8(target->getPersistentID().c_str());
+            info.sourceFingerprint = fingerprint;
+            state.analysisResult.sourceKey = fingerprint;
+        }
+        restored.add(std::move(state));
+    }
     {
         const juce::ScopedLock lock(persistentStateLock);
-        persistentStates = restored;
+        for (auto i = persistentStates.size(); --i >= 0;)
+        {
+            const auto& info = persistentStates.getReference(i).sourceInfo;
+            auto replace = selected.contains(info.sourceFingerprint);
+            if (info.isComposite)
+                for (const auto& mapping : info.playbackMappings)
+                    replace = replace || selected.contains(mapping.sourceFingerprint);
+            if (replace) persistentStates.remove(i);
+        }
+        for (auto& state : restored)
+        {
+            for (auto i = persistentStates.size(); --i >= 0;)
+                if (persistentStates.getReference(i).sourceInfo.sourceFingerprint == state.sourceInfo.sourceFingerprint)
+                    persistentStates.remove(i);
+            persistentStates.add(std::move(state));
+        }
     }
+    if (restoreDocument)
     {
         const juce::ScopedLock lock(playbackParamsLock);
         playbackParams = restoredParams;
+        playbackParamsRevision.fetch_add(1, std::memory_order_release);
+        restoredPlaybackParams.store(true, std::memory_order_release);
     }
-    {
-        const juce::ScopedLock lock(sourceAudioCacheLock);
-        sourceAudioCaches.clear();
-    }
-    sourceAudioCacheRevision.fetch_add(1, std::memory_order_release);
+    // Restoring edits does not change raw audio. Lifecycle/content callbacks
+    // invalidate only affected sources, and endEditing preloads any missing data.
     persistentStateRevision.fetch_add(1, std::memory_order_release);
-    playbackParamsRevision.fetch_add(1, std::memory_order_release);
-    restoredPlaybackParams.store(true, std::memory_order_release);
-    requestSourceAudioCacheWarmup();
-
     if (auto* archivingController = getDocumentController()->getHostArchivingController())
         archivingController->notifyDocumentUnarchivingProgress(1.0f);
-
-    return ! input.failed();
+    return true;
 }
 
 juce::ARAPlaybackRenderer* QQDeBreathARADocumentController::doCreatePlaybackRenderer()
 {
-    requestSourceAudioCacheWarmup();
+    // Source/model callbacks own all host reads. Binding a renderer does no I/O.
     return new QQDeBreathARAPlaybackRenderer(getDocumentController(), *this);
 }
 
 bool QQDeBreathARADocumentController::doStoreObjectsToStream(juce::ARAOutputStream& output,
                                                              const juce::ARAStoreObjectsFilter* filter) noexcept
 {
-    juce::ignoreUnused(filter);
-
     juce::Array<QQDeBreathARAPersistentState> snapshot;
     QQDeBreathARAPlaybackParams playbackSnapshot;
+    juce::StringArray selectedIds;
+    if (filter != nullptr)
+        for (auto* source : filter->getAudioSourcesToStore<juce::ARAAudioSource>())
+            selectedIds.add(juce::String::fromUTF8(source->getPersistentID().c_str()));
     {
         const juce::ScopedLock lock(persistentStateLock);
-        snapshot = persistentStates;
+        for (const auto& state : persistentStates)
+        {
+            const auto& info = state.sourceInfo;
+            auto selected = filter == nullptr || selectedIds.contains(info.persistentId);
+            if (info.isComposite)
+            {
+                selected = filter == nullptr || filter->shouldStoreDocumentData();
+            }
+            if (selected) snapshot.add(state);
+        }
     }
+    if (filter == nullptr || filter->shouldStoreDocumentData())
     {
         const juce::ScopedLock lock(playbackParamsLock);
         playbackSnapshot = playbackParams;
+    }
+
+    // Store an explicit untouched-source entry too. Otherwise an empty archive
+    // cannot reset a previously edited target when the host remaps persistent IDs.
+    const auto defaults = getPlaybackParams();
+    std::vector<const juce::ARAAudioSource*> sources;
+    if (filter != nullptr) sources = filter->getAudioSourcesToStore<juce::ARAAudioSource>();
+    else if (auto* document = getDocumentController()->getDocument<juce::ARADocument>())
+        for (auto* source : document->getAudioSources<juce::ARAAudioSource>()) sources.push_back(source);
+    for (auto* source : sources)
+    {
+        const auto id = juce::String::fromUTF8(source->getPersistentID().c_str());
+        bool exists = false;
+        for (const auto& state : snapshot)
+            if (!state.sourceInfo.isComposite && state.sourceInfo.persistentId == id) exists = true;
+        if (exists) continue;
+        QQDeBreathARAPersistentState state;
+        auto& info = state.sourceInfo;
+        info.persistentId = id;
+        info.name = id;
+        info.sourceFingerprint = buildAraSourceFingerprint(*source);
+        info.sampleRate = source->getSampleRate();
+        info.channelCount = static_cast<int>(source->getChannelCount());
+        info.numSamples = source->getSampleCount();
+        info.durationSeconds = info.sampleRate > 0 ? info.numSamples / info.sampleRate : 0.0;
+        state.analysisResult.sourceKey = info.sourceFingerprint;
+        state.playbackParams = defaults;
+        snapshot.add(std::move(state));
     }
 
     const auto payload = serializeAraPersistentStates(snapshot, playbackSnapshot);

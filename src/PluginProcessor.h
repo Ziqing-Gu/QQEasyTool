@@ -292,8 +292,16 @@ public:
     std::uint64_t getSourceAudioCacheRevision() const noexcept { return sourceAudioCacheRevision.load(std::memory_order_acquire); }
     bool hasRestoredPlaybackParams() const noexcept { return restoredPlaybackParams.load(std::memory_order_acquire); }
     void requestSourceAudioCacheWarmup();
+    bool cacheSourceAudioForPlayback(juce::ARAAudioSource& source, juce::String& status);
 
 protected:
+    void didEndEditing(juce::ARADocument*) override;
+    void didEnableAudioSourceSamplesAccess(juce::ARAAudioSource*, bool enable) override;
+    void didDeactivateAudioSourceForUndoHistory(juce::ARAAudioSource*, bool deactivate) override;
+    void willDestroyAudioSource(juce::ARAAudioSource*) override;
+    void willUpdateAudioSourceProperties(juce::ARAAudioSource*, juce::ARAAudioSource::PropertiesPtr) override;
+    void didUpdateAudioSourceProperties(juce::ARAAudioSource*) override;
+    void doUpdateAudioSourceContent(juce::ARAAudioSource*, juce::ARAContentUpdateScopes) override;
     juce::ARAPlaybackRenderer* doCreatePlaybackRenderer() override;
     bool doRestoreObjectsFromStream(juce::ARAInputStream& input, const juce::ARARestoreObjectsFilter* filter) noexcept override;
     bool doStoreObjectsToStream(juce::ARAOutputStream& output, const juce::ARAStoreObjectsFilter* filter) noexcept override;
@@ -305,8 +313,8 @@ private:
         double sampleRate = 0.0;
         QQDeBreathARASourceAudioBuffer audio;
     };
-    class CacheWarmupThread;
-    bool warmSourceAudioCaches(const std::function<bool()>& shouldExit);
+
+    void removeSourceAudioCache(const juce::String& fingerprint);
 
     mutable juce::CriticalSection persistentStateLock;
     juce::Array<QQDeBreathARAPersistentState> persistentStates;
@@ -318,6 +326,4 @@ private:
     std::atomic<std::uint64_t> playbackParamsRevision { 1 };
     std::atomic<std::uint64_t> sourceAudioCacheRevision { 1 };
     std::atomic<bool> restoredPlaybackParams { false };
-    juce::CriticalSection cacheWarmupThreadLock;
-    std::unique_ptr<CacheWarmupThread> cacheWarmupThread;
 };

@@ -1,0 +1,13 @@
+{
+  "product": "QQEasyTool",
+  "version": "1.06",
+  "internalVersion": "1.0.6",
+  "status": "Stable",
+  "userDesignatedStable": true,
+  "installed": true,
+  "previousDesignatedStable": "1.04",
+  "rollbackVersion": "1.05",
+  "windowsValidation": "PASS",
+  "macBuilds": false,
+  "originalHostProjectVerified": false
+}

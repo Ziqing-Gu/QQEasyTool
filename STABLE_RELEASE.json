@@ -1,20 +1,26 @@
 {
   "product": "QQEasyTool",
-  "version": "1.04",
-  "internalVersion": "1.0.4",
+  "version": "1.06",
+  "internalVersion": "1.0.6",
   "status": "Stable",
-  "confirmedAt": "2026-09-20T00:32:35+08:00",
-  "confirmationSource": "User requested Stable and Plan B, C, D",
-  "scope": "Ordinary VST3 transport; ARA processing unchanged; automated ARA input checks passed, no new real ARA/macOS host acceptance claimed",
+  "previousDesignatedStable": "1.04",
+  "rollbackVersion": "1.05",
+  "confirmedAt": "2026-10-24T04:04:01.918766+08:00",
+  "confirmationSource": "User requested analogous issue fix, overwrite VST3, Stable, Plan B and GitHub upload; Windows only.",
   "binaryChangedForStableMarking": false,
-  "pluginFiles": {
-    "Contents/Resources/moduleinfo.json": {
+  "pluginFiles": [
+    {
       "bytes": 1417,
-      "sha256": "adc4e08f0c11e053541c80eb6b1c0097b161341d73e57146727a29113acef3ee"
+      "relative": "Contents\\Resources\\moduleinfo.json",
+      "sha256": "363400df65f30f1a36c6aea2d17a2dcb112330393abe4622d2c10d8348e9d36e"
     },
-    "Contents/x86_64-win/QQEasyTool.vst3": {
-      "bytes": 7503872,
-      "sha256": "cad3a4025ab88528504e7a173546f9caed516f2721301a2138d342750da61c20"
+    {
+      "bytes": 7520768,
+      "relative": "Contents\\x86_64-win\\QQEasyTool.vst3",
+      "sha256": "47b2ae565029136bf57bacc8cd814e22ccf2c963494d38259c78165d4e838657"
     }
-  }
+  ],
+  "installed": true,
+  "originalHostProjectVerified": false,
+  "macBuilds": false
 }
