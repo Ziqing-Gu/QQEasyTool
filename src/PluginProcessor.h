@@ -10,6 +10,8 @@
 #include "Parameters.h"
 #include "shared/BridgeAnalysis.h"
 #include "shared/BreathEq.h"
+#include "shared/EditHistory.h"
+#include "shared/AnalysisJobs.h"
 
 struct QQDeBreathARASourceInfo
 {
@@ -121,6 +123,9 @@ public:
 
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
+    std::uint64_t getAnalysisEditRevision() const noexcept { return analysisEditRevision.load(std::memory_order_acquire); }
+    QQEditorHistory<QQDeBreathARAPersistentState> editorHistory;
+    std::uint64_t getEditorStateRestoreRevision() const noexcept { return editorStateRestoreRevision.load(std::memory_order_acquire); }
     bool hasRestoredStateInformation() const noexcept { return restoredStateInformation.load(std::memory_order_acquire); }
     bool claimInitialGlobalDefaultsApplication() noexcept
     {
@@ -177,7 +182,10 @@ public:
     juce::AudioProcessorValueTreeState parameters;
 
 private:
+    std::atomic<std::uint64_t> editorStateRestoreRevision { 0 };
+    std::atomic<std::uint64_t> analysisEditRevision { 0 };
     friend class QQEasyToolMonitorRoutingProbe;
+    friend class QQEasyToolAraSelectionProbe;
     friend class QQDeBreathTransportSyncProbe;
 
     void appendToRecordedBuffer(const juce::AudioBuffer<float>& buffer, double hostTimeSeconds);
@@ -254,12 +262,33 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(QQDeBreathAudioProcessor)
 };
 
-class QQDeBreathARADocumentController final : public juce::ARADocumentControllerSpecialisation
+class QQDeBreathARADocumentController final : public juce::ARADocumentControllerSpecialisation, private juce::Timer
 {
 public:
-    using juce::ARADocumentControllerSpecialisation::ARADocumentControllerSpecialisation;
+    friend class QQEasyToolAraSelectionProbe;
+    QQDeBreathARADocumentController(const ARA::PlugIn::PlugInEntry*, const ARA::ARADocumentControllerHostInstance*);
 
     ~QQDeBreathARADocumentController() override;
+    bool startSourceAnalysis(const QQDeBreathARASourceInfo&, const QQDeBreathBridgeAnalysisConfig&);
+    void cancelSourceAnalysis(const juce::String&);
+    bool isSourceAnalysisRunning(const juce::String& key) const { return analysisJobs.busy(key); }
+    bool isSourceAnalysisQueued(const juce::String& key) const { return analysisJobs.queued(key); }
+    juce::uint32 sourceAnalysisStartedAt(const juce::String& key) const { return analysisJobs.startedAt(key); }
+    std::uint64_t getSourceAnalysisRevision(const juce::String& key) const
+    {
+        const auto revision = [&](const juce::String& sourceKey) {
+            const auto i = analysisRevisions.find(sourceKey);
+            return i == analysisRevisions.end() ? std::uint64_t{0} : i->second;
+        };
+        auto value = revision(key);
+        QQDeBreathARAPersistentState state;
+        if (getPersistentStateForSource(key, state) && state.sourceInfo.isComposite)
+            for (const auto& mapping : state.sourceInfo.playbackMappings)
+                value += revision(mapping.sourceFingerprint);
+        return value;
+    }
+    void pollSourceAnalyses();
+
 
     void upsertPersistentState(const QQDeBreathARASourceInfo& sourceInfo,
                                const QQDeBreathBridgeAnalysisResult& analysisResult,
@@ -290,6 +319,8 @@ public:
     std::uint64_t getPersistentStateRevision() const noexcept { return persistentStateRevision.load(std::memory_order_acquire); }
     std::uint64_t getPlaybackParamsRevision() const noexcept { return playbackParamsRevision.load(std::memory_order_acquire); }
     std::uint64_t getSourceAudioCacheRevision() const noexcept { return sourceAudioCacheRevision.load(std::memory_order_acquire); }
+    QQEditorHistory<QQDeBreathARAPersistentState> editorHistory;
+    std::uint64_t getArchiveRestoreRevision() const noexcept { return archiveRestoreRevision.load(std::memory_order_acquire); }
     bool hasRestoredPlaybackParams() const noexcept { return restoredPlaybackParams.load(std::memory_order_acquire); }
     void requestSourceAudioCacheWarmup();
     bool cacheSourceAudioForPlayback(juce::ARAAudioSource& source, juce::String& status);
@@ -314,7 +345,13 @@ private:
         QQDeBreathARASourceAudioBuffer audio;
     };
 
+    void timerCallback() override { pollSourceAnalyses(); }
+    void commitSourceAnalysis(const QQDeBreathARASourceInfo&, const QQDeBreathBridgeAnalysisResult&, const juce::Array<double>&);
+    QQAnalysisJobs<QQDeBreathARASourceInfo> analysisJobs;
+    std::map<juce::String, std::uint64_t> analysisRevisions;
     void removeSourceAudioCache(const juce::String& fingerprint);
+    void notifySourceEditsChanged(const QQDeBreathARASourceInfo& info);
+    std::atomic<std::uint64_t> archiveRestoreRevision { 0 };
 
     mutable juce::CriticalSection persistentStateLock;
     juce::Array<QQDeBreathARAPersistentState> persistentStates;

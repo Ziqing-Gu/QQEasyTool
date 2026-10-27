@@ -8,7 +8,9 @@
 
 class QQDeBreathAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                              private juce::AudioProcessorEditorARAExtension,
-                                             private juce::Timer
+                                             private juce::Timer,
+                                             private juce::ARAEditorView::Listener,
+                                             private juce::AsyncUpdater
 {
 public:
     explicit QQDeBreathAudioProcessorEditor(QQDeBreathAudioProcessor& processor);
@@ -22,6 +24,7 @@ public:
     void setScaleFactor(float newScaleFactor) override;
 
 private:
+    friend class QQEasyToolAraSelectionProbe;
     enum class SourceMode
     {
         none,
@@ -176,6 +179,8 @@ private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
 
     void timerCallback() override;
+    void onNewSelection(const juce::ARAViewSelection&) override { triggerAsyncUpdate(); }
+    void handleAsyncUpdate() override { updateRecordingInfo(); }
     void scheduleInitialHostLayoutSync();
     void performInitialHostLayoutSync();
     void updateRecordingInfo();
@@ -187,6 +192,13 @@ private:
     void updateAraRuntimeState();
     void updateAraRuntimeMappedSourceStates(const QQDeBreathBridgeAnalysisResult& result);
     void restoreAraStateIfNeeded();
+    void restoreOrdinaryStateIfNeeded();
+    QQEditorHistory<QQDeBreathARAPersistentState>& getEditHistory();
+    void recordCurrentEditState();
+    bool canUndoRedo(bool redo) const;
+    void performUndoRedo(bool redo);
+    void applyEditorPlaybackParams(const QQDeBreathARAPlaybackParams& restoredParams);
+    juce::String buildAraSelectionKey(const juce::Array<juce::ARAPlaybackRegion*>& regions, juce::ARAAudioSource* source) const;
     QQDeBreathARAPlaybackParams buildAraPlaybackParams() const;
     void syncAraPlaybackParams();
     double getHostTimeSeconds(bool* hostIsPlaying = nullptr) const;
@@ -239,6 +251,7 @@ private:
     void updateBreathDetailPreviewForListening(double gainDb, const QQDeBreathEqState& eqState);
     void updateAnalysisInfo();
     void exportRecording();
+    bool isCurrentAnalysisRunning() const;
     void startAnalysis();
     void cancelAnalysis();
     void clearAnalysis();
@@ -343,6 +356,17 @@ private:
     juce::int64 lastDisplayedRecordedSamples = 0;
     uint32_t lastWaveformRefreshMs = 0;
     uint32_t lastAraRestoreAttemptMs = 0;
+    juce::String araSelectionKey;
+    bool restoringAraSelection = false;
+    bool haveSyncedAraParams = false;
+    QQDeBreathARAPlaybackParams lastSyncedAraParams;
+    std::uint64_t analysisGeneration = 0;
+    std::uint64_t lastSourceAnalysisRevision = 0;
+    std::uint64_t lastArchiveRestoreRevision = 0;
+    std::uint64_t lastOrdinaryRestoreRevision = 0;
+    std::uint64_t lastHistoryAnalysisRevision = ~std::uint64_t { 0 };
+    juce::String lastHistorySourceKey;
+    QQDeBreathARAPlaybackParams lastHistoryParams;
     bool showingLiveRecordingPreview = false;
     bool showingBreathEqPage = false;
     GlobalEqMode globalEqMode = GlobalEqMode::breath;

@@ -1,0 +1,24 @@
+QQEasyTool 1.08 Stable — Windows / macOS 安装和升级
+2026-10-27 | 界面版本 1.08 | 插件元数据 1.0.8
+
+1. 选择成品
+Windows 10/11 x64：QQEasyTool-Windows-x64-1.08.zip。
+Mac 原生 Apple Silicon 宿主：Apple-Silicon VST3；Intel 或 Rosetta 宿主：Intel VST3。Logic Pro 使用 AU-Universal（arm64 + x86_64）。macOS 11 或更高版本。只安装需要的格式，VST3 不要同时安装两种架构。
+
+2. 安装
+先保存工程并完全退出所有宿主。解压后复制整个 QQEasyTool.vst3 到 C:\Program Files\Common Files\VST3（Windows），或 ~/Library/Audio/Plug-Ins/VST3（Mac）。AU 复制整个 QQEasyTool.component 到 ~/Library/Audio/Plug-Ins/Components。替换旧 bundle，避免系统和用户目录存在重复副本。重新打开宿主并重新扫描。
+Mac 成品采用 ad-hoc 签名，没有 Apple Developer ID 公证。仅在确认下载来源可信后，如隔离属性阻止加载，可在终端输入 xattr -dr com.apple.quarantine 后加一个空格，把已安装的插件 bundle 拖入终端，再回车。不要对整个插件目录或磁盘执行此操作。
+
+3. ARA 与普通插入
+ARA 必须通过宿主的事件/音频扩展入口加载，普通插入效果不自动成为 ARA。ARA 直接读取选中素材；普通 VST3/AU 使用 Record 录入要分析的音频，停止录入后 Analyze。Analyze 自动检测 Breath；Noise/Others 等类型可手工标记。先试听，再决定是否渲染或导出。
+
+4. 本次变化
+1.07：选择不同 ARA 音源立即刷新波形和参数；Reload 保留编辑；区域、Gain、Norm、EQ 等操作加入按音源的内部 Undo/Redo。
+1.08：ARA 分析按音源在后台运行，切轨或关闭窗口不取消；同一插件共享两个低优先级工作线程，多任务可排队。稀疏素材分析加速，模型及区域判定规则不变。
+Undo/Redo 在当前处理器/ARA 文档会话内最多保留 64 步；工程保存会保留编辑结果，不把完整历史链保存到下一次应用启动。宿主自身历史面板与分组由宿主决定，不保证每一次操作均显示为 Cubase 历史条目。
+完整音源缓存的内存消耗随素材时长和声道数增加。初次加载或撤销重新激活可能需要等待。旧版已经渲染为静音的音频需从原始素材重新渲染。
+
+5. 版本、验证和许可
+Windows 成品复用此前通过检查并已安装的本机版本。Mac 编译、架构和签名检查见此版 Release；自动测试不是用户 Cubase/Studio One 工程或 Mac DAW 实机验收。
+完整功能公开体验，不设到期时间或功能限制。沿用 Qing Audio 非商业源码共享许可证 1.0。完整对应源码包含 ARA SDK 和 JUCE，使用 Complete-Source.zip；GitHub 自动 Source code (zip)/(tar.gz) 不是可安装插件。
+https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.08

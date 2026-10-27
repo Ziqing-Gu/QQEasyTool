@@ -781,9 +781,9 @@ bool QQDeBreathWaveformEditor::keyPressed(const juce::KeyPress& key)
     if ((modifiers.isCommandDown() || modifiers.isCtrlDown()) && (keyCode == 'z' || keyCode == 'Z'))
     {
         if (modifiers.isShiftDown())
-            redo();
+            { if (onRedoRequested) onRedoRequested(); else redo(); }
         else
-            undo();
+            { if (onUndoRequested) onUndoRequested(); else undo(); }
 
         return true;
     }

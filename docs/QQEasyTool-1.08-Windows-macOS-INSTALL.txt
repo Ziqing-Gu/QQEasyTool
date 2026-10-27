@@ -1,0 +1,23 @@
+QQEasyTool 1.08 Stable — Windows / macOS installation and upgrade
+2026-10-27 | UI 1.08 | Plug-in metadata 1.0.8
+
+1. Choose a package
+Windows 10/11 x64: QQEasyTool-Windows-x64-1.08.zip. For a native Apple Silicon Mac host choose Apple-Silicon VST3; for Intel/Rosetta choose Intel VST3. Logic Pro uses AU-Universal (arm64 + x86_64). macOS 11+ is required. Install only needed formats and one matching VST3 architecture.
+
+2. Install
+Save projects and quit every host. Extract and copy the complete QQEasyTool.vst3 bundle to C:\Program Files\Common Files\VST3 on Windows, or ~/Library/Audio/Plug-Ins/VST3 on Mac. Copy QQEasyTool.component to ~/Library/Audio/Plug-Ins/Components for AU. Replace the old bundle, avoid duplicate user/system copies, then reopen and rescan.
+Mac packages are ad-hoc signed, not Apple Developer ID notarized. Only after verifying a trusted download, if quarantine prevents loading, type xattr -dr com.apple.quarantine followed by a space in Terminal, drag the installed plug-in bundle into Terminal, then press Return. Do not target the entire plug-in directory or disk.
+
+3. ARA versus ordinary insert
+Load ARA through the host's event/audio-extension command. An ordinary insert does not become ARA automatically. ARA reads selected source audio; ordinary VST3/AU uses Record to capture input, then Analyze after capture stops. Automatic detection identifies Breath. Other region types are marked manually. Audition before rendering or exporting.
+
+4. Changes
+1.07: immediate ARA source selection with waveform/parameter refresh; Reload preserves edits; per-source internal Undo/Redo for regions, Gain, Norm and EQ.
+1.08: source-owned ARA background analysis survives track switches and editor closure. Two low-priority workers shared by each plug-in process queued jobs. Sparse audio analysis is faster with unchanged model and region rules.
+Internal history retains up to 64 steps per source during the current processor/document session. Project saving preserves edits, but the complete undo chain is not serialized across application restarts. Host history entries and grouping remain host-dependent; individual Cubase history entries are not guaranteed.
+Full-source caching uses memory proportional to active duration and channels. Initial loading or undo reactivation can take time. Previously rendered silence must be rendered again from original source events.
+
+5. Version, validation and license
+The verified local Windows build is reused. See this Release for Mac build, architecture and signature checks. Automated checks are not acceptance in the user's original Cubase/Studio One project or a real Mac DAW.
+Full functionality for public feedback, with no expiry or feature limits. Existing Qing Audio Non-Commercial Source-Share License 1.0 applies. Complete-Source.zip includes corresponding source, ARA SDK and JUCE. GitHub automatic Source code (zip)/(tar.gz) files are not installable plug-ins.
+https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.08

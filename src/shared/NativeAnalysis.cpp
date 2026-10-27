@@ -85,7 +85,6 @@ double percentileCopy(std::vector<double> values, double percentile)
     if (values.empty())
         return 0.0;
 
-    std::sort(values.begin(), values.end());
 
     if (values.size() == 1)
         return values.front();
@@ -94,7 +93,12 @@ double percentileCopy(std::vector<double> values, double percentile)
     const auto lower = static_cast<size_t>(std::floor(position));
     const auto upper = std::min(values.size() - 1, lower + 1);
     const auto frac = position - static_cast<double>(lower);
-    return values[lower] * (1.0 - frac) + values[upper] * frac;
+    // Only the two adjacent order statistics are needed, not a full sample sort.
+    std::nth_element(values.begin(), values.begin() + static_cast<std::ptrdiff_t>(lower), values.end());
+    const auto lowerValue = values[lower];
+    const auto upperValue = upper == lower ? lowerValue
+        : *std::min_element(values.begin() + static_cast<std::ptrdiff_t>(upper), values.end());
+    return lowerValue * (1.0 - frac) + upperValue * frac;
 }
 
 double percentileRange(const std::vector<double>& values, int start, int end, double percentile)
@@ -548,13 +552,33 @@ void spectralDetailFrames(const std::vector<double>& mono,
     sibilanceHigh1DensityDb.assign(static_cast<size_t>(frames), safePowerDb(eps));
     sibilanceHigh2DensityDb.assign(static_cast<size_t>(frames), safePowerDb(eps));
 
+    int inspected = 0, lastNonzero = -1, silentFrame = -1;
     for (auto i = 0; i < frames; ++i)
     {
         if (shouldCancel && shouldCancel())
             return;
 
-        std::fill(fftData.begin(), fftData.end(), 0.0f);
         const auto start = i * hop;
+        for (; inspected < start + frame; ++inspected)
+            if (padded[static_cast<size_t>(inspected)] != 0.0) lastNonzero = inspected;
+        const bool silent = lastNonzero < start;
+        // Evaluate one truly zero frame with the original FFT/statistics, then reuse
+        // it exactly. Quiet breaths and room tone still use the complete calculation.
+        if (silent && silentFrame >= 0)
+        {
+            flatness[static_cast<size_t>(i)] = flatness[static_cast<size_t>(silentFrame)];
+            centroid[static_cast<size_t>(i)] = centroid[static_cast<size_t>(silentFrame)];
+            crestDb[static_cast<size_t>(i)] = crestDb[static_cast<size_t>(silentFrame)];
+            lowFlatness[static_cast<size_t>(i)] = lowFlatness[static_cast<size_t>(silentFrame)];
+            airFlatness[static_cast<size_t>(i)] = airFlatness[static_cast<size_t>(silentFrame)];
+            sibilanceLowDensityDb[static_cast<size_t>(i)] = sibilanceLowDensityDb[static_cast<size_t>(silentFrame)];
+            sibilanceMidLowDensityDb[static_cast<size_t>(i)] = sibilanceMidLowDensityDb[static_cast<size_t>(silentFrame)];
+            sibilanceHigh1DensityDb[static_cast<size_t>(i)] = sibilanceHigh1DensityDb[static_cast<size_t>(silentFrame)];
+            sibilanceHigh2DensityDb[static_cast<size_t>(i)] = sibilanceHigh2DensityDb[static_cast<size_t>(silentFrame)];
+            continue;
+        }
+        if (silent) silentFrame = i;
+        std::fill(fftData.begin(), fftData.end(), 0.0f);
         for (auto j = 0; j < frame; ++j)
             fftData[static_cast<size_t>(j)] = static_cast<float>(padded[static_cast<size_t>(start + j)] * window[static_cast<size_t>(j)]);
 
@@ -720,12 +744,19 @@ Features featuresForAudio(const std::vector<double>& mono,
 
     const auto full = frameRms(mono, frame, hop);
     const auto sub = bandRms(mono, sr, "sub", frame, hop);
+    if (shouldCancel && shouldCancel()) return features;
     const auto low = bandRms(mono, sr, "low", frame, hop);
+    if (shouldCancel && shouldCancel()) return features;
     const auto body = bandRms(mono, sr, "body", frame, hop);
+    if (shouldCancel && shouldCancel()) return features;
     const auto presence = bandRms(mono, sr, "presence", frame, hop);
+    if (shouldCancel && shouldCancel()) return features;
     const auto air = bandRms(mono, sr, "air", frame, hop);
+    if (shouldCancel && shouldCancel()) return features;
     const auto sib = bandRms(mono, sr, "sib", frame, hop);
+    if (shouldCancel && shouldCancel()) return features;
     const auto ultra = sr > 22000 ? bandRms(mono, sr, "ultra", frame, hop) : air;
+    if (shouldCancel && shouldCancel()) return features;
 
     features.fullDb.resize(full.size(), 0.0);
     for (size_t i = 0; i < full.size(); ++i)
@@ -1657,33 +1688,35 @@ QQDeBreathBridgeAnalysisResult cancelledResult(const juce::String& sourceKey)
 QQDeBreathBridgeAnalysisResult QQDeBreathNativeAnalysis::run(const QQDeBreathBridgeAnalysisConfig& config,
                                                              const ShouldCancel& shouldCancel)
 {
-    QQDeBreathBridgeAnalysisResult result;
-    result.hasResult = true;
-    result.sourceKey = config.sourceKey;
-    result.status = "Native C++ analysis started.";
-    result.schemaVersion = 1;
-    result.resultJson = config.outputJson;
-
-    if (shouldCancel && shouldCancel())
-        return cancelledResult(config.sourceKey);
-
-    if (! config.inputWav.existsAsFile())
-    {
-        result.status = "Native C++ analysis failed.";
-        result.errorMessage = "Input wav does not exist: " + config.inputWav.getFullPathName();
-        return result;
-    }
-
-    juce::String error;
-    auto sampleRate = 0.0;
+    if (shouldCancel && shouldCancel()) return cancelledResult(config.sourceKey);
+    juce::String error; double sampleRate = 0.0;
     auto audio = readAudioFile(config.inputWav, sampleRate, error);
-    if (audio.getNumSamples() <= 0 || sampleRate <= 0.0)
+    if (audio.getNumSamples() > 0 && sampleRate > 0.0)
+        return runWithAudio(config, audio, sampleRate, shouldCancel);
+    QQDeBreathBridgeAnalysisResult result;
+    result.hasResult = true; result.sourceKey = config.sourceKey;
+    result.status = "Native C++ analysis failed.";
+    result.errorMessage = error.isNotEmpty() ? error : "Input audio is empty or unavailable.";
+    return result;
+}
+
+QQDeBreathBridgeAnalysisResult QQDeBreathNativeAnalysis::runWithAudio(
+    const QQDeBreathBridgeAnalysisConfig& config, const juce::AudioBuffer<float>& audio,
+    double sampleRate, const ShouldCancel& shouldCancel)
+{
+    // Long digital-silence tails can otherwise leave the IIR states in subnormal
+    // arithmetic. This changes only values far below the feature noise floor.
+    const juce::ScopedNoDenormals noDenormals;
+    QQDeBreathBridgeAnalysisResult result;
+    result.hasResult = true; result.sourceKey = config.sourceKey;
+    result.status = "Native C++ analysis started.";
+    result.schemaVersion = 1; result.resultJson = config.outputJson;
+    if (shouldCancel && shouldCancel()) return cancelledResult(config.sourceKey);
+    if (audio.getNumSamples() <= 0 || audio.getNumChannels() <= 0 || sampleRate <= 0.0)
     {
-        result.status = "Native C++ analysis failed.";
-        result.errorMessage = error.isNotEmpty() ? error : "Input audio is empty.";
+        result.status = "Native C++ analysis failed."; result.errorMessage = "Invalid cached audio.";
         return result;
     }
-
     result.sampleRate = static_cast<int>(std::llround(sampleRate));
     result.channels = audio.getNumChannels();
     result.numSamples = audio.getNumSamples();

@@ -12,6 +12,47 @@
 
 namespace
 {
+void notifyHostOfEditorEdit(juce::AudioProcessor& processor)
+{
+    auto details = juce::AudioProcessorListener::ChangeDetails{}.withNonParameterStateChanged(true);
+    // JUCE's AU wrapper dispatches ClassInfo changes through the preset flag;
+    // nonParameterStateChanged alone is only consumed by the VST3 wrapper.
+    if (processor.wrapperType == juce::AudioProcessor::wrapperType_AudioUnit)
+        details = details.withProgramChanged(true);
+    processor.updateHostDisplay(details);
+}
+
+bool editorPlaybackParamsEqual(const QQDeBreathARAPlaybackParams& a, const QQDeBreathARAPlaybackParams& b)
+{
+    return a.monitorVoice == b.monitorVoice && a.monitorBreath == b.monitorBreath
+        && a.monitorNoize == b.monitorNoize && a.monitorSibilance == b.monitorSibilance
+        && a.monitorOthers == b.monitorOthers && a.followPlayhead == b.followPlayhead
+        && a.enableFade == b.enableFade && a.normalizeBreath == b.normalizeBreath
+        && a.normalizeSibilance == b.normalizeSibilance
+        && a.fadeInMs == b.fadeInMs && a.fadeOutMs == b.fadeOutMs
+        && a.breathTargetDb == b.breathTargetDb && a.sibilanceTargetDb == b.sibilanceTargetDb
+        && a.breathGainDb == b.breathGainDb && a.sibilanceGainDb == b.sibilanceGainDb
+        && a.waveformDisplayGain == b.waveformDisplayGain
+        && serializeBreathEqState(a.breathEqState) == serializeBreathEqState(b.breathEqState)
+        && serializeBreathEqState(a.sibilanceEqState) == serializeBreathEqState(b.sibilanceEqState);
+}
+
+juce::String editorHistoryIdentity(const QQDeBreathARAPersistentState& state)
+{
+    auto result = state.analysisResult;
+    result.status.clear(); result.errorMessage.clear(); result.sourceKey.clear();
+    const auto& p = state.playbackParams;
+    juce::MemoryOutputStream stream;
+    stream.writeString(QQDeBreathBridgeAnalysis::serializeResult(result));
+    for (bool v : {p.monitorVoice, p.monitorBreath, p.monitorNoize, p.followPlayhead, p.enableFade, p.normalizeBreath}) stream.writeBool(v);
+    for (double v : {p.fadeInMs, p.fadeOutMs, p.breathTargetDb, p.breathGainDb, p.waveformDisplayGain}) stream.writeDouble(v);
+    stream.writeString(serializeBreathEqState(p.breathEqState));
+    for (bool v : {p.monitorSibilance, p.monitorOthers, p.normalizeSibilance}) stream.writeBool(v);
+    for (double v : {p.sibilanceTargetDb, p.sibilanceGainDb}) stream.writeDouble(v);
+    stream.writeString(serializeBreathEqState(p.sibilanceEqState));
+    return stream.getMemoryBlock().toBase64Encoding();
+}
+
 void setupInfoLabel(juce::Label& label)
 {
     label.setJustificationType(juce::Justification::centredLeft);
@@ -357,7 +398,8 @@ public:
     AnalysisThread(QQDeBreathAudioProcessorEditor& ownerIn, QQDeBreathBridgeAnalysisConfig configIn)
         : juce::Thread("QQEasyTool VST3 Native Analysis"),
           owner(&ownerIn),
-          config(std::move(configIn))
+          config(std::move(configIn)),
+          generation(ownerIn.analysisGeneration)
     {
     }
 
@@ -371,9 +413,9 @@ public:
     {
         auto result = QQDeBreathNativeAnalysis::run(config, [this] { return threadShouldExit(); });
 
-        juce::MessageManager::callAsync([safeOwner = owner, result]
+        juce::MessageManager::callAsync([safeOwner = owner, result, requestGeneration = generation]
         {
-            if (safeOwner != nullptr)
+            if (safeOwner != nullptr && safeOwner->analysisGeneration == requestGeneration)
                 safeOwner->handleAnalysisFinished(result);
         });
     }
@@ -381,6 +423,7 @@ public:
 private:
     juce::Component::SafePointer<QQDeBreathAudioProcessorEditor> owner;
     QQDeBreathBridgeAnalysisConfig config;
+    const std::uint64_t generation;
 };
 
 QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioProcessor& processor)
@@ -388,6 +431,7 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
       AudioProcessorEditorARAExtension(&processor),
       audioProcessor(processor)
 {
+    restoringAraSelection = true;
     setWantsKeyboardFocus(true);
     titleLabel.setText("QQEasyTool", juce::dontSendNotification);
     titleLabel.setJustificationType(juce::Justification::centred);
@@ -396,7 +440,7 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
     addAndMakeVisible(titleLabel);
     titleLabel.setVisible(false);
 
-    phaseLabel.setText("QQEasyTool 1.05 | Breath Analysis | Live Region Monitor", juce::dontSendNotification);
+    phaseLabel.setText("QQEasyTool " QQDEBREATH_PLUGIN_VERSION " | Breath Analysis | Live Region Monitor", juce::dontSendNotification);
     phaseLabel.setJustificationType(juce::Justification::centred);
     phaseLabel.setColour(juce::Label::textColourId, juce::Colour(0xffcbd5e1));
     phaseLabel.setFont(juce::Font(18.0f, juce::Font::plain));
@@ -460,7 +504,7 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
     setupButton(undoButton, juce::Colour(0xff334155));
     undoButton.onClick = [this]
     {
-        waveformEditor.undo();
+        performUndoRedo(false);
         updateAnalysisInfo();
     };
     addAndMakeVisible(undoButton);
@@ -468,7 +512,7 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
     setupButton(redoButton, juce::Colour(0xff334155));
     redoButton.onClick = [this]
     {
-        waveformEditor.redo();
+        performUndoRedo(true);
         updateAnalysisInfo();
     };
     addAndMakeVisible(redoButton);
@@ -660,6 +704,8 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
     sibilanceGainAttachment = std::make_unique<SliderAttachment>(audioProcessor.parameters, QQDeBreath::ParamIDs::sibilanceGainDb, sibilanceGainSlider);
     waveformSizeAttachment = std::make_unique<SliderAttachment>(audioProcessor.parameters, QQDeBreath::ParamIDs::waveformDisplayGain, waveformSizeSlider);
 
+    waveformEditor.onUndoRequested = [this] { performUndoRedo(false); };
+    waveformEditor.onRedoRequested = [this] { performUndoRedo(true); };
     waveformEditor.onRegionsChanged = [this](const juce::Array<QQDeBreathBridgeRegion>& regions)
     {
         waveformRegionsChanged(regions);
@@ -888,7 +934,9 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
     }
     applySavedGlobalDefaultsIfFreshInstance();
     waveformEditor.setAnalysisResult(audioProcessor.getAnalysisResult());
+    restoringAraSelection = false;
     updateRecordingInfo();
+    if (auto* view = getARAEditorView()) view->addListener(this);
     startTimerHz(30);
 
     const auto initialAraContext = isAraContext();
@@ -903,7 +951,9 @@ QQDeBreathAudioProcessorEditor::QQDeBreathAudioProcessorEditor(QQDeBreathAudioPr
 
 QQDeBreathAudioProcessorEditor::~QQDeBreathAudioProcessorEditor()
 {
-    cancelAnalysis();
+    cancelPendingUpdate();
+    if (auto* view = getARAEditorView()) view->removeListener(this);
+    if (!isAraContext()) cancelAnalysis();
 }
 
 void QQDeBreathAudioProcessorEditor::paint(juce::Graphics& g)
@@ -925,9 +975,9 @@ bool QQDeBreathAudioProcessorEditor::keyPressed(const juce::KeyPress& key)
     if ((modifiers.isCommandDown() || modifiers.isCtrlDown()) && (keyCode == 'z' || keyCode == 'Z'))
     {
         if (modifiers.isShiftDown())
-            waveformEditor.redo();
+            performUndoRedo(true);
         else
-            waveformEditor.undo();
+            performUndoRedo(false);
 
         updateAnalysisInfo();
         return true;
@@ -1268,6 +1318,7 @@ void QQDeBreathAudioProcessorEditor::timerCallback()
 
 void QQDeBreathAudioProcessorEditor::updateRecordingInfo()
 {
+    restoreOrdinaryStateIfNeeded();
     restoreAraStateIfNeeded();
 
     const auto info = audioProcessor.getRecordedBufferInfo();
@@ -1305,7 +1356,7 @@ void QQDeBreathAudioProcessorEditor::updateRecordingInfo()
     refreshRecordedWaveformIfNeeded(info);
     updateBreathEqDynamicSpectrum();
 
-    const auto analysisRunning = analysisThread != nullptr && analysisThread->isThreadRunning();
+    const auto analysisRunning = isCurrentAnalysisRunning();
     const auto araContext = isAraContext();
     const auto result = audioProcessor.getAnalysisResult();
     const auto canExportStems = result.succeeded && hasAnalyzableSource(info);
@@ -1314,8 +1365,8 @@ void QQDeBreathAudioProcessorEditor::updateRecordingInfo()
     stopButton.setEnabled(! araContext && (info.isRecordArmed || info.isRecording) && ! analysisRunning);
     clearButton.setEnabled(! araContext && (info.isRecordArmed || info.hasRecording) && ! analysisRunning);
     exportButton.setEnabled(! info.isRecordArmed && ! info.isRecording && canExportStems && ! analysisRunning);
-    undoButton.setEnabled(waveformEditor.canUndo() && ! analysisRunning);
-    redoButton.setEnabled(waveformEditor.canRedo() && ! analysisRunning);
+    undoButton.setEnabled(canUndoRedo(false) && ! analysisRunning);
+    redoButton.setEnabled(canUndoRedo(true) && ! analysisRunning);
 
     updateAnalysisInfo();
     updatePlayheadFromHost(info);
@@ -1720,6 +1771,7 @@ void QQDeBreathAudioProcessorEditor::applyBreathDetailFromUi()
 
 void QQDeBreathAudioProcessorEditor::updateBreathDetailPreviewForListening(double gainDb, const QQDeBreathEqState& eqState)
 {
+    if (! breathDetailAutoApplyButton.getToggleState()) breathDetailPreviewDirty = true;
     if (! selectedRegionSupportsProcessing())
         return;
 
@@ -1794,6 +1846,9 @@ QQDeBreathARADocumentController* QQDeBreathAudioProcessorEditor::getAraDocumentC
 
 void QQDeBreathAudioProcessorEditor::persistAraState()
 {
+    if (restoringAraSelection)
+        return;
+    recordCurrentEditState();
     if (! isAraContext() || araSourceInfo.sourceFingerprint.isEmpty())
         return;
 
@@ -1883,6 +1938,8 @@ void QQDeBreathAudioProcessorEditor::persistAraMappedSourceStates(const QQDeBrea
 
 void QQDeBreathAudioProcessorEditor::updateAraRuntimeState()
 {
+    if (restoringAraSelection)
+        return;
     if (! isAraContext() || araSourceInfo.sourceFingerprint.isEmpty())
         return;
 
@@ -1975,109 +2032,197 @@ void QQDeBreathAudioProcessorEditor::updateAraRuntimeMappedSourceStates(const QQ
 
 void QQDeBreathAudioProcessorEditor::restoreAraStateIfNeeded()
 {
-    if (! isAraContext())
+
+    if (! isAraContext() || restoringAraSelection)
         return;
-
-    if (sourceMode == SourceMode::ara && araSourceInfo.exportedWav.existsAsFile()
-        && araPlaybackCacheReady)
-        return;
-
-    const auto now = juce::Time::getMillisecondCounter();
-    if (lastAraRestoreAttemptMs != 0 && now - lastAraRestoreAttemptMs < 1000u)
-        return;
-
-    lastAraRestoreAttemptMs = now;
-
     auto* documentController = getAraDocumentController();
-    if (documentController == nullptr)
+    if (documentController == nullptr || documentController->getDocumentController()->isHostEditingDocument())
         return;
 
+    documentController->pollSourceAnalyses();
+    const auto completedAnalysis = documentController->getSourceAnalysisRevision(araSourceInfo.sourceFingerprint)
+                                  != lastSourceAnalysisRevision;
+    const auto restoreRevision = documentController->getArchiveRestoreRevision();
+    const auto hostRestored = restoreRevision != lastArchiveRestoreRevision || completedAnalysis;
+    const auto regions = findSelectedAraPlaybackRegions();
     auto* source = findCurrentAudioSource();
-    QQDeBreathARAPersistentState restoredState;
-    auto haveState = false;
-
-    if (source != nullptr)
-        haveState = documentController->getPersistentStateForSource(buildAraSourceFingerprint(*source), restoredState);
-
-    if (! haveState || restoredState.sourceInfo.sourceFingerprint.isEmpty())
+    const auto selectionKey = buildAraSelectionKey(regions, source);
+    const auto selectionChanged = selectionKey != araSelectionKey;
+    if (! selectionChanged && ! hostRestored && araPlaybackCacheReady && araSourceInfo.exportedWav.existsAsFile())
+        return;
+    const auto now = juce::Time::getMillisecondCounter();
+    if (! selectionChanged && ! hostRestored && lastAraRestoreAttemptMs != 0 && now - lastAraRestoreAttemptMs < 1000u)
         return;
 
-    if (source == nullptr || buildAraSourceFingerprint(*source) != restoredState.sourceInfo.sourceFingerprint)
+    if (selectionChanged || hostRestored)
     {
-        if (auto* editorView = getARAEditorView())
-        {
-            if (auto* araDocumentController = editorView->getDocumentController())
-            {
-                if (auto* document = araDocumentController->getDocument<juce::ARADocument>())
-                {
-                    for (auto* candidate : document->getAudioSources<juce::ARAAudioSource>())
-                    {
-                        if (candidate != nullptr && buildAraSourceFingerprint(*candidate) == restoredState.sourceInfo.sourceFingerprint)
-                        {
-                            source = candidate;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        const juce::ScopedValueSetter<bool> suppressWriteback(restoringAraSelection, hostRestored);
+        if (hostRestored) { breathEqPreviewDirty = breathDetailPreviewDirty = false; }
+        // Roll back an unapplied preview while the old source is still bound. Flush only
+        // pending edits: an idle view must not overwrite newer document state on leaving.
+        showMainPage();
+        if (araPlaybackCacheReady && ! hostRestored)
+            syncAraPlaybackParams();
+        if (araPlaybackCacheReady && ! isCurrentAnalysisRunning()
+            && (pendingBreathDetailPersist || pendingWaveformRefreshShouldPersist || pendingAraRuntimeUpdate))
+            persistAraState();
+        // ARA jobs belong to the document/source and keep running across selections.
+        lastSourceAnalysisRevision = 0;
+        analysisStartMs = 0;
+        pendingBreathDetailPersist = pendingWaveformRefresh = pendingWaveformRefreshShouldPersist = false;
+        pendingAraRuntimeUpdate = pendingSpectrumRefresh = false;
+        araSelectionKey = selectionKey;
+        araPlaybackCacheReady = false;
+        sourceMode = SourceMode::ara;
+        araSourceInfo = {};
+        lastExportedFile = juce::File {};
+        audioProcessor.clearAraSourceInfo();
+        audioProcessor.clearAnalysisResult();
+        waveformEditor.clearAudio();
+        waveformEditor.setAnalysisResult({});
+        selectedRegionIndex = breathDetailSnapshotIndex = -1;
+        breathEqSpectrumSourceKey.clear();
+        breathEqSpectrumSourceBuffer.setSize(0, 0);
+        breathEqSpectrumPeakMemo.clear();
+        globalPreSpectrumPeak.clear(); globalPostSpectrumPeak.clear();
+        detailPreSpectrumPeak.clear(); detailPostSpectrumPeak.clear();
     }
-
+    lastArchiveRestoreRevision = restoreRevision;
+    lastAraRestoreAttemptMs = now;
     if (source == nullptr)
         return;
 
-    auto restoredInfo = restoredState.sourceInfo;
-    restoredInfo.name = restoredInfo.name.isNotEmpty() ? restoredInfo.name : makeAraSourceName(*source);
-    restoredInfo.persistentId = restoredInfo.persistentId.isNotEmpty()
-                              ? restoredInfo.persistentId
-                              : juce::String::fromUTF8(source->getPersistentID().c_str());
-    restoredInfo.sampleRate = restoredInfo.sampleRate > 0.0 ? restoredInfo.sampleRate : source->getSampleRate();
-    restoredInfo.channelCount = restoredInfo.channelCount > 0 ? restoredInfo.channelCount : static_cast<int>(source->getChannelCount());
-    restoredInfo.numSamples = restoredInfo.numSamples > 0 ? restoredInfo.numSamples : static_cast<juce::int64>(source->getSampleCount());
-    restoredInfo.durationSeconds = restoredInfo.durationSeconds > 0.0
-                                 ? restoredInfo.durationSeconds
-                                 : (restoredInfo.sampleRate > 0.0 ? static_cast<double>(restoredInfo.numSamples) / restoredInfo.sampleRate : 0.0);
-    if (! restoredInfo.isComposite && restoredInfo.playbackMappings.isEmpty())
-        populateAraPlaybackMappings(*source, restoredInfo);
-
-
-    if (! restoredInfo.exportedWav.existsAsFile())
+    // UI/APVTS callbacks fire synchronously while controls are restored. They must not
+    // persist partially restored controls into either source (or the document defaults).
+    const juce::ScopedValueSetter<bool> restoring(restoringAraSelection, true);
+    QQDeBreathARASourceInfo loadedInfo;
+    if (regions.size() > 1)
     {
-        if (! exportAraSourceToWav(*source, restoredInfo))
+        if (! exportSelectedAraPlaybackRegionsToWav(loadedInfo))
         {
-            statusLabel.setText("Status: " + restoredInfo.exportStatus, juce::dontSendNotification);
+            araSourceInfo.exportStatus = loadedInfo.exportStatus;
             return;
         }
     }
-
-    juce::String cacheStatus;
-    if (! cacheAraSourceForPlayback(*source, cacheStatus))
+    else
     {
-        statusLabel.setText("Status: " + cacheStatus, juce::dontSendNotification);
+        loadedInfo.name = makeAraSourceName(*source);
+        loadedInfo.persistentId = juce::String::fromUTF8(source->getPersistentID().c_str());
+        loadedInfo.sourceFingerprint = buildAraSourceFingerprint(*source);
+        loadedInfo.sampleRate = source->getSampleRate();
+        loadedInfo.channelCount = static_cast<int>(source->getChannelCount());
+        loadedInfo.numSamples = static_cast<juce::int64>(source->getSampleCount());
+        loadedInfo.durationSeconds = loadedInfo.sampleRate > 0 ? loadedInfo.numSamples / loadedInfo.sampleRate : 0;
+        populateAraPlaybackMappings(*source, loadedInfo);
+        QQDeBreathARAPersistentState existing;
+        if (documentController->getPersistentStateForSource(loadedInfo.sourceFingerprint, existing))
+            loadedInfo.exportedWav = existing.sourceInfo.exportedWav;
+        if (! loadedInfo.exportedWav.existsAsFile() && ! exportAraSourceToWav(*source, loadedInfo))
+        {
+            araSourceInfo.exportStatus = loadedInfo.exportStatus;
+            return;
+        }
+    }
+    juce::String cacheStatus;
+    for (auto* region : regions)
+    {
+        auto* selectedSource = region->getAudioModification()->getAudioSource<juce::ARAAudioSource>();
+        if (! cacheAraSourceForPlayback(*selectedSource, cacheStatus))
+        {
+            araSourceInfo.exportStatus = cacheStatus;
+            return;
+        }
+    }
+    if (regions.isEmpty() && ! cacheAraSourceForPlayback(*source, cacheStatus))
+    {
+        araSourceInfo.exportStatus = cacheStatus;
         return;
     }
-    araPlaybackCacheReady = true;
 
+    QQDeBreathARAPersistentState restoredState;
+    const auto haveState = documentController->getPersistentStateForSource(loadedInfo.sourceFingerprint, restoredState);
+    if (! haveState)
+    {
+        applySavedGlobalDefaults();
+        restoredState.playbackParams = buildAraPlaybackParams();
+    }
+    if (loadedInfo.isComposite)
+    {
+        // Rebuild group regions from the live sources: a background analysis can
+        // complete after this group's editor snapshot was first created.
+        restoredState.analysisResult = {};
+        for (const auto& mapping : loadedInfo.playbackMappings)
+        {
+            QQDeBreathARAPersistentState mapped;
+            if (! documentController->getPersistentStateForSource(mapping.sourceFingerprint, mapped)) continue;
+            for (const auto& region : mapped.analysisResult.regions)
+            {
+                const auto start = juce::jmax(region.startTime, mapping.sourceStartSeconds);
+                const auto end = juce::jmin(region.endTime, mapping.sourceStartSeconds + mapping.compositeEndSeconds - mapping.compositeStartSeconds);
+                if (end <= start) continue;
+                auto translated = region;
+                translated.startTime = mapping.compositeStartSeconds + start - mapping.sourceStartSeconds;
+                translated.endTime = mapping.compositeStartSeconds + end - mapping.sourceStartSeconds;
+                translated.startSample = static_cast<juce::int64>(std::llround(translated.startTime * loadedInfo.sampleRate));
+                translated.endSample = static_cast<juce::int64>(std::llround(translated.endTime * loadedInfo.sampleRate));
+                restoredState.analysisResult.regions.add(translated);
+            }
+            restoredState.analysisResult.hasResult |= mapped.analysisResult.hasResult;
+            restoredState.analysisResult.succeeded |= mapped.analysisResult.succeeded;
+        }
+    }
     auto restoredAnalysis = restoredState.analysisResult;
-    if (restoredAnalysis.hasResult && restoredAnalysis.sourceKey.isEmpty())
-        restoredAnalysis.sourceKey = restoredInfo.sourceFingerprint;
-
+    restoredAnalysis.sourceKey = loadedInfo.sourceFingerprint;
+    restoredAnalysis.sampleRate = static_cast<int>(loadedInfo.sampleRate);
+    restoredAnalysis.channels = loadedInfo.channelCount;
+    restoredAnalysis.numSamples = loadedInfo.numSamples;
+    restoredAnalysis.durationSeconds = loadedInfo.durationSeconds;
+    restoredAnalysis.breathCount = restoredAnalysis.noizeCount = restoredAnalysis.othersCount = restoredAnalysis.sibilanceCount = 0;
+    for (const auto& region : restoredAnalysis.regions)
+    {
+        const auto type = qqNormalizedRegionType(region.type);
+        if (type == "Breath") ++restoredAnalysis.breathCount;
+        else if (type == "Noise") ++restoredAnalysis.noizeCount;
+        else ++restoredAnalysis.othersCount;
+    }
+    juce::String waveformStatus;
+    QQDeBreathARASourceAudioBuffer displayAudio;
+    double displayRate = 0; bool displayFound = false;
+    documentController->tryGetSourceAudioCache(loadedInfo.sourceFingerprint, displayAudio, displayRate, displayFound);
+    if (displayFound && displayAudio != nullptr)
+        waveformEditor.setAudioBuffer(*displayAudio, displayRate);
+    else if (! waveformEditor.loadAudioFile(loadedInfo.exportedWav, waveformStatus))
+    {
+        araSourceInfo.exportStatus = waveformStatus;
+        return;
+    }
     sourceMode = SourceMode::ara;
-    araSourceInfo = restoredInfo;
-    araSourceInfo.exportStatus = "Restored ARA source from project: " + araSourceInfo.name;
-    lastExportedFile = araSourceInfo.exportedWav;
+    araSourceInfo = loadedInfo;
+    lastSourceAnalysisRevision = documentController->getSourceAnalysisRevision(loadedInfo.sourceFingerprint);
+    araSourceInfo.exportStatus = "Loaded ARA source: " + loadedInfo.name;
+    araPlaybackCacheReady = true;
+    lastExportedFile = loadedInfo.exportedWav;
     lastDisplayedRecordedSamples = 0;
     showingLiveRecordingPreview = false;
-
-    juce::String waveformStatus;
-    waveformEditor.loadAudioFile(araSourceInfo.exportedWav, waveformStatus);
     audioProcessor.setAraSourceInfo(araSourceInfo);
     audioProcessor.setAnalysisResult(restoredAnalysis);
     waveformEditor.setAnalysisResult(restoredAnalysis);
-    audioProcessor.setAnalysisRegionPeakCache(restoredState.regionPeakCache);
+    audioProcessor.setAnalysisRegionPeakCache(waveformEditor.buildRegionPeakCache(restoredAnalysis.regions));
     selectedRegionIndex = -1;
 
-    const auto restoredParams = restoredState.playbackParams;
+    applyEditorPlaybackParams(restoredState.playbackParams);
+    pendingWaveformRefresh = pendingWaveformRefreshShouldPersist = pendingAraRuntimeUpdate = pendingSpectrumRefresh = false;
+    lastSyncedAraParams = buildAraPlaybackParams();
+    haveSyncedAraParams = true;
+    // Store the loaded view only. Loading a group must not erase edits outside its range.
+    if (! haveState || loadedInfo.isComposite)
+        documentController->updateRuntimePersistentState(araSourceInfo, restoredAnalysis, buildAraPlaybackParams(),
+                                                  waveformEditor.buildRegionPeakCache(restoredAnalysis.regions));
+
+}
+
+void QQDeBreathAudioProcessorEditor::applyEditorPlaybackParams(const QQDeBreathARAPlaybackParams& restoredParams)
+{
     monitorVoiceButton.setToggleState(restoredParams.monitorVoice, juce::sendNotificationSync);
     monitorBreathButton.setToggleState(restoredParams.monitorBreath, juce::sendNotificationSync);
     monitorNoizeButton.setToggleState(restoredParams.monitorNoize, juce::sendNotificationSync);
@@ -2098,6 +2243,100 @@ void QQDeBreathAudioProcessorEditor::restoreAraStateIfNeeded()
     audioProcessor.setSibilanceEqState(restoredParams.sibilanceEqState);
     refreshBreathEqUi();
     refreshBreathEqSpectrum();
+}
+
+QQEditorHistory<QQDeBreathARAPersistentState>& QQDeBreathAudioProcessorEditor::getEditHistory()
+{
+    if (auto* document = getAraDocumentController()) return document->editorHistory;
+    return audioProcessor.editorHistory;
+}
+
+void QQDeBreathAudioProcessorEditor::recordCurrentEditState()
+{
+    if (restoringAraSelection || isCurrentAnalysisRunning()) return;
+    if ((breathDetailPreviewDirty && ! breathDetailAutoApplyButton.getToggleState())
+        || (breathEqPreviewDirty && ! breathEqAutoApplyButton.getToggleState())) return;
+    if (isAraContext() && ! araPlaybackCacheReady) return;
+    const auto info = audioProcessor.getRecordedBufferInfo();
+    if (! isAraContext() && (! info.hasRecording || info.isRecording || info.isRecordArmed)) return;
+    const auto key = getActiveSourceKey(info);
+    const auto revision = audioProcessor.getAnalysisEditRevision();
+    const auto params = buildAraPlaybackParams();
+    const auto dragging = juce::ModifierKeys::getCurrentModifiersRealtime().isAnyMouseButtonDown();
+    if (key == lastHistorySourceKey && revision == lastHistoryAnalysisRevision
+        && editorPlaybackParamsEqual(params, lastHistoryParams))
+    {
+        if (! dragging) getEditHistory().endGesture(key);
+        return;
+    }
+    QQDeBreathARAPersistentState state;
+    state.sourceInfo = araSourceInfo;
+    state.analysisResult = audioProcessor.getAnalysisResult();
+    state.playbackParams = params;
+    const auto changed = getEditHistory().record(key, state, editorHistoryIdentity(state), dragging);
+    if (changed && ! isAraContext())
+        notifyHostOfEditorEdit(audioProcessor);
+    lastHistorySourceKey = key;
+    lastHistoryAnalysisRevision = revision;
+    lastHistoryParams = params;
+}
+
+bool QQDeBreathAudioProcessorEditor::canUndoRedo(bool redo) const
+{
+    const auto key = getActiveSourceKey(audioProcessor.getRecordedBufferInfo());
+    if (auto* document = getAraDocumentController()) return document->editorHistory.canMove(key, redo);
+    return audioProcessor.editorHistory.canMove(key, redo);
+}
+
+void QQDeBreathAudioProcessorEditor::performUndoRedo(bool redo)
+{
+    if (isCurrentAnalysisRunning()) return;
+    showMainPage();
+    recordCurrentEditState();
+    QQDeBreathARAPersistentState state;
+    const auto key = getActiveSourceKey(audioProcessor.getRecordedBufferInfo());
+    if (! getEditHistory().move(key, redo, state)) return;
+    {
+        const juce::ScopedValueSetter<bool> restoring(restoringAraSelection, true);
+        pendingBreathDetailPersist = pendingWaveformRefresh = pendingWaveformRefreshShouldPersist = false;
+        pendingAraRuntimeUpdate = pendingSpectrumRefresh = false;
+        audioProcessor.setAnalysisResult(state.analysisResult);
+        waveformEditor.setAnalysisResult(state.analysisResult);
+        selectedRegionIndex = -1;
+        applyEditorPlaybackParams(state.playbackParams);
+        pendingWaveformRefresh = pendingWaveformRefreshShouldPersist = pendingAraRuntimeUpdate = pendingSpectrumRefresh = false;
+        lastSyncedAraParams = buildAraPlaybackParams();
+        haveSyncedAraParams = true;
+        if (auto* document = getAraDocumentController())
+        {
+            document->upsertPersistentState(araSourceInfo, state.analysisResult, state.playbackParams,
+                                            waveformEditor.buildRegionPeakCache(state.analysisResult.regions));
+            if (araSourceInfo.isComposite) persistAraMappedSourceStates(state.analysisResult);
+        }
+    }
+    if (! isAraContext())
+        notifyHostOfEditorEdit(audioProcessor);
+    updateRecordingInfo();
+}
+
+void QQDeBreathAudioProcessorEditor::restoreOrdinaryStateIfNeeded()
+{
+    if (isAraContext()) return;
+    const auto revision = audioProcessor.getEditorStateRestoreRevision();
+    if (revision == lastOrdinaryRestoreRevision) return;
+    const juce::ScopedValueSetter<bool> restoring(restoringAraSelection, true);
+    lastOrdinaryRestoreRevision = revision;
+    ++analysisGeneration;
+    analysisThread.reset();
+    breathEqPreviewDirty = breathDetailPreviewDirty = false;
+    showMainPage();
+    pendingBreathDetailPersist = pendingWaveformRefresh = pendingWaveformRefreshShouldPersist = false;
+    pendingAraRuntimeUpdate = pendingSpectrumRefresh = false;
+    audioProcessor.editorHistory.clear();
+    waveformEditor.setAnalysisResult(audioProcessor.getAnalysisResult());
+    selectedRegionIndex = -1;
+    lastDisplayedRecordedSamples = -1;
+    refreshBreathEqUi();
 }
 
 QQDeBreathARAPlaybackParams QQDeBreathAudioProcessorEditor::buildAraPlaybackParams() const
@@ -2126,11 +2365,22 @@ QQDeBreathARAPlaybackParams QQDeBreathAudioProcessorEditor::buildAraPlaybackPara
 
 void QQDeBreathAudioProcessorEditor::syncAraPlaybackParams()
 {
+    if (restoringAraSelection)
+        return;
+    recordCurrentEditState();
+    if (isAraContext() && (! araPlaybackCacheReady || araSourceInfo.sourceFingerprint.isEmpty()))
+        return;
     auto* documentController = getAraDocumentController();
     if (documentController == nullptr)
         return;
 
     const auto params = buildAraPlaybackParams();
+    // An idle shared view must not write its controls into another view's newer state,
+    // or apply group defaults to every source just because the selection changed.
+    if (isAraContext() && haveSyncedAraParams && editorPlaybackParamsEqual(params, lastSyncedAraParams))
+        return;
+    lastSyncedAraParams = params;
+    haveSyncedAraParams = true;
     if (isAraContext() && araSourceInfo.sourceFingerprint.isNotEmpty())
     {
         documentController->setPlaybackParamsForSource(araSourceInfo, params);
@@ -2196,6 +2446,7 @@ void QQDeBreathAudioProcessorEditor::refreshRecordedWaveformIfNeeded(const QQDeB
 
 void QQDeBreathAudioProcessorEditor::applyBreathEqStateFromUi(const QQDeBreathEqState& state)
 {
+    if (showingBreathEqPage && ! breathEqAutoApplyButton.getToggleState()) breathEqPreviewDirty = true;
     globalPostSpectrumPeak.clear();
     auto sanitized = sanitizeBreathEqState(state);
     sanitized.bypassed = false;
@@ -2485,6 +2736,7 @@ void QQDeBreathAudioProcessorEditor::refreshBreathEqSpectrumSource()
 
 void QQDeBreathAudioProcessorEditor::refreshBreathEqSpectrum()
 {
+    if (restoringAraSelection && ! showingBreathEqPage && ! showingBreathDetailPage) return;
     auto result = audioProcessor.getAnalysisResult();
     if (! result.succeeded || result.regions.isEmpty())
     {
@@ -3132,110 +3384,12 @@ void QQDeBreathAudioProcessorEditor::updatePlayheadFromHost(const QQDeBreathAudi
 
 void QQDeBreathAudioProcessorEditor::reloadAraSource()
 {
-    araSourceInfo = {};
-    audioProcessor.clearAraSourceInfo();
-    audioProcessor.clearAnalysisResult();
-    waveformEditor.setAnalysisResult({});
-    selectedRegionIndex = -1;
+
+    // Load is also used to retry unavailable host sample access; never clear saved edits.
     araPlaybackCacheReady = false;
-    applySavedGlobalDefaults();
-
-    const auto selectedPlaybackRegions = findSelectedAraPlaybackRegions();
-    if (selectedPlaybackRegions.size() > 1)
-    {
-        auto compositeInfo = QQDeBreathARASourceInfo();
-        if (exportSelectedAraPlaybackRegionsToWav(compositeInfo))
-        {
-            juce::StringArray cachedFingerprints;
-            for (auto* playbackRegion : selectedPlaybackRegions)
-            {
-                auto* modification = playbackRegion != nullptr ? playbackRegion->getAudioModification() : nullptr;
-                auto* selectedSource = modification != nullptr
-                                     ? modification->getAudioSource<juce::ARAAudioSource>()
-                                     : nullptr;
-                if (selectedSource == nullptr)
-                    continue;
-
-                const auto fingerprint = buildAraSourceFingerprint(*selectedSource);
-                if (cachedFingerprints.contains(fingerprint))
-                    continue;
-
-                juce::String cacheStatus;
-                if (! cacheAraSourceForPlayback(*selectedSource, cacheStatus))
-                {
-                    compositeInfo.exportStatus = cacheStatus;
-                    statusLabel.setText("Status: " + cacheStatus, juce::dontSendNotification);
-                    updateAnalysisInfo();
-                    return;
-                }
-                cachedFingerprints.add(fingerprint);
-            }
-            araPlaybackCacheReady = ! cachedFingerprints.isEmpty();
-
-            sourceMode = SourceMode::ara;
-            araSourceInfo = compositeInfo;
-            lastExportedFile = araSourceInfo.exportedWav;
-            lastDisplayedRecordedSamples = 0;
-            showingLiveRecordingPreview = false;
-            juce::String waveformStatus;
-            waveformEditor.loadAudioFile(araSourceInfo.exportedWav, waveformStatus);
-            audioProcessor.setAraSourceInfo(araSourceInfo);
-            persistAraState();
-            updateRecordingInfo();
-            return;
-        }
-
-        araSourceInfo = compositeInfo;
-        statusLabel.setText("Status: " + araSourceInfo.exportStatus, juce::dontSendNotification);
-        updateAnalysisInfo();
-        return;
-    }
-
-    auto* source = findCurrentAudioSource();
-    if (source == nullptr)
-    {
-        araSourceInfo.exportStatus = "No ARA audio source found. Use QQDeBreath from Cubase Audio Extensions, then click Load.";
-        statusLabel.setText("Status: " + araSourceInfo.exportStatus, juce::dontSendNotification);
-        updateAnalysisInfo();
-        return;
-    }
-
-    araSourceInfo.name = makeAraSourceName(*source);
-    araSourceInfo.persistentId = juce::String::fromUTF8(source->getPersistentID().c_str());
-    araSourceInfo.sampleRate = source->getSampleRate();
-    araSourceInfo.channelCount = static_cast<int>(source->getChannelCount());
-    araSourceInfo.numSamples = static_cast<juce::int64>(source->getSampleCount());
-    araSourceInfo.durationSeconds = araSourceInfo.sampleRate > 0.0
-                                  ? static_cast<double>(araSourceInfo.numSamples) / araSourceInfo.sampleRate
-                                  : 0.0;
-    araSourceInfo.sourceFingerprint = buildAraSourceFingerprint(*source);
-    populateAraPlaybackMappings(*source, araSourceInfo);
-
-
-    if (exportAraSourceToWav(*source, araSourceInfo))
-    {
-        juce::String cacheStatus;
-        if (! cacheAraSourceForPlayback(*source, cacheStatus))
-        {
-            araSourceInfo.exportStatus = cacheStatus;
-            statusLabel.setText("Status: " + cacheStatus, juce::dontSendNotification);
-            updateAnalysisInfo();
-            return;
-        }
-        araPlaybackCacheReady = true;
-
-        sourceMode = SourceMode::ara;
-        lastExportedFile = araSourceInfo.exportedWav;
-        lastDisplayedRecordedSamples = 0;
-        showingLiveRecordingPreview = false;
-        juce::String waveformStatus;
-        waveformEditor.loadAudioFile(araSourceInfo.exportedWav, waveformStatus);
-        araSourceInfo.exportStatus = "Loaded ARA source: " + araSourceInfo.name;
-        audioProcessor.setAraSourceInfo(araSourceInfo);
-        persistAraState();
-    }
-
+    lastAraRestoreAttemptMs = 0;
     updateRecordingInfo();
+
 }
 
 juce::ARAAudioSource* QQDeBreathAudioProcessorEditor::findCurrentAudioSource() const
@@ -3266,12 +3420,13 @@ juce::Array<juce::ARAPlaybackRegion*> QQDeBreathAudioProcessorEditor::findSelect
     {
         const auto selectedRegions = editorView->getViewSelection().getEffectivePlaybackRegions<juce::ARAPlaybackRegion>();
         for (auto* region : selectedRegions)
-            if (region != nullptr && (assignedRegions.isEmpty() || assignedRegions.contains(region)))
+            if (region != nullptr)
                 out.addIfNotAlreadyThere(region);
     }
 
-    // ARA selection is document-wide. When another track is selected, this editor must stay
-    // bound to the playback regions assigned to its own plugin instance.
+    // The host chooses the EditorView selection independently of playback-renderer roles.
+    // A shared Cubase view may edit another track while its renderer still owns this one.
+    // Use renderer assignment only before the host supplies an explicit selection.
     if (out.isEmpty())
         for (auto* region : assignedRegions)
             if (region != nullptr)
@@ -3285,6 +3440,22 @@ juce::Array<juce::ARAPlaybackRegion*> QQDeBreathAudioProcessorEditor::findSelect
     return out;
 }
 
+
+juce::String QQDeBreathAudioProcessorEditor::buildAraSelectionKey(
+    const juce::Array<juce::ARAPlaybackRegion*>& regions, juce::ARAAudioSource* source) const
+{
+    if (source == nullptr) return {};
+    juce::String key = buildAraSourceFingerprint(*source);
+    for (auto* region : regions)
+        key << "|" << juce::String::toHexString(reinterpret_cast<juce::pointer_sized_int>(region))
+            << ":" << buildAraSourceFingerprint(*region->getAudioModification()->getAudioSource<juce::ARAAudioSource>())
+            << ":" << juce::String(region->getStartInPlaybackTime(), 9)
+            << ":" << juce::String(region->getEndInPlaybackTime(), 9)
+            << ":" << juce::String(region->getStartInAudioModificationTime(), 9)
+            << ":" << juce::String(region->getEndInAudioModificationTime(), 9);
+    return key;
+}
+
 void QQDeBreathAudioProcessorEditor::populateAraPlaybackMappings(
     juce::ARAAudioSource& source,
     QQDeBreathARASourceInfo& info) const
@@ -3293,14 +3464,10 @@ void QQDeBreathAudioProcessorEditor::populateAraPlaybackMappings(
     auto playbackStart = std::numeric_limits<double>::max();
     auto playbackEnd = -std::numeric_limits<double>::max();
 
-    for (auto* modification : source.getAudioModifications<juce::ARAAudioModification>())
+    for (auto* playbackRegion : findSelectedAraPlaybackRegions())
     {
-        if (modification == nullptr)
-            continue;
-
-        for (auto* playbackRegion : modification->getPlaybackRegions<juce::ARAPlaybackRegion>())
         {
-            if (playbackRegion == nullptr)
+            if (playbackRegion == nullptr || playbackRegion->getAudioModification()->getAudioSource() != &source)
                 continue;
 
             QQDeBreathARASourceInfo::PlaybackMapping mapping;
@@ -3504,6 +3671,17 @@ bool QQDeBreathAudioProcessorEditor::exportAraSourceToWav(juce::ARAAudioSource& 
     auto outFile = outDir.getChildFile(fileStem + "_" + info.sourceFingerprint + ".wav");
     outFile.deleteFile();
 
+    if (auto* document = getAraDocumentController())
+    {
+        QQDeBreathARASourceAudioBuffer cached; double rate = 0; bool found = false;
+        if (document->tryGetSourceAudioCache(info.sourceFingerprint, cached, rate, found) && found && cached != nullptr)
+        {
+            if (! writeWavFile(outFile, *cached, rate, info.exportStatus)) return false;
+            info.exportedWav = outFile;
+            info.exportStatus = "Loaded cached ARA source: " + info.name;
+            return true;
+        }
+    }
     juce::ARAAudioSourceReader reader(&source);
     if (! reader.isValid())
     {
@@ -3754,15 +3932,15 @@ void QQDeBreathAudioProcessorEditor::updateAnalysisInfo()
 {
     const auto info = audioProcessor.getRecordedBufferInfo();
     const auto result = audioProcessor.getAnalysisResult();
-    const auto analysisRunning = analysisThread != nullptr && analysisThread->isThreadRunning();
+    const auto analysisRunning = isCurrentAnalysisRunning();
 
     if (analysisRunning)
     {
-        const auto elapsed = analysisStartMs == 0 ? 0u : juce::Time::getMillisecondCounter() - analysisStartMs;
-        const auto estimatedMs = static_cast<uint32_t>(juce::jlimit(8000.0, 90000.0, info.durationSeconds * 350.0 + 5000.0));
-        const auto percent = juce::jlimit(5, 95, 5 + static_cast<int>(std::round(90.0 * static_cast<double>(elapsed) / static_cast<double>(estimatedMs))));
-        analysisStatusLabel.setText(percent < 95 ? "Analysis: " + juce::String(percent) + "%"
-                                                : "Analysis: Finalizing analysis...",
+        auto* document = getAraDocumentController();
+        const auto started = document != nullptr ? document->sourceAnalysisStartedAt(araSourceInfo.sourceFingerprint) : analysisStartMs;
+        const auto elapsed = started == 0 ? 0u : juce::Time::getMillisecondCounter() - started;
+        const bool queued = document != nullptr && document->isSourceAnalysisQueued(araSourceInfo.sourceFingerprint);
+        analysisStatusLabel.setText(queued ? "Analysis: Queued..." : "Analysis: Analyzing... " + juce::String(elapsed / 1000.0, 1) + " s",
                                     juce::dontSendNotification);
     }
     else
@@ -3788,8 +3966,16 @@ void QQDeBreathAudioProcessorEditor::updateAnalysisInfo()
     clearAnalysisButton.setEnabled(! analysisRunning && result.hasResult);
 }
 
+bool QQDeBreathAudioProcessorEditor::isCurrentAnalysisRunning() const
+{
+    if (auto* document = getAraDocumentController())
+        return document->isSourceAnalysisRunning(araSourceInfo.sourceFingerprint);
+    return analysisThread != nullptr;
+}
+
 void QQDeBreathAudioProcessorEditor::startAnalysis()
 {
+    if (isCurrentAnalysisRunning()) return;
     const auto info = audioProcessor.getRecordedBufferInfo();
     if (! hasAnalyzableSource(info))
     {
@@ -3820,7 +4006,8 @@ void QQDeBreathAudioProcessorEditor::startAnalysis()
 
     lastExportedFile = inputWav;
     juce::String waveformStatus;
-    waveformEditor.loadAudioFile(lastExportedFile, waveformStatus);
+    if (sourceMode != SourceMode::ara || !araPlaybackCacheReady)
+        waveformEditor.loadAudioFile(lastExportedFile, waveformStatus);
 
     const auto sourceKey = getActiveSourceKey(info).isNotEmpty() ? getActiveSourceKey(info) : inputWav.getFileNameWithoutExtension();
     auto outDir = juce::File::getSpecialLocation(juce::File::tempDirectory)
@@ -3844,6 +4031,21 @@ void QQDeBreathAudioProcessorEditor::startAnalysis()
     config.outputBreathRegions = true;
     config.outputSibilanceRegions = false;
 
+    if (auto* document = getAraDocumentController())
+    {
+        showMainPage();
+        syncAraPlaybackParams();
+        if (pendingBreathDetailPersist || pendingWaveformRefreshShouldPersist || pendingAraRuntimeUpdate)
+            persistAraState();
+        recordCurrentEditState();
+        pendingBreathDetailPersist = pendingWaveformRefresh = pendingWaveformRefreshShouldPersist = false;
+        pendingAraRuntimeUpdate = pendingSpectrumRefresh = false;
+        document->startSourceAnalysis(araSourceInfo, config);
+        updateRecordingInfo();
+        return;
+    }
+
+    ++analysisGeneration;
     QQDeBreathBridgeAnalysisResult pending;
     pending.status = "Reading audio...";
     pending.sourceKey = sourceKey;
@@ -3857,6 +4059,12 @@ void QQDeBreathAudioProcessorEditor::startAnalysis()
 
 void QQDeBreathAudioProcessorEditor::cancelAnalysis()
 {
+    if (auto* document = getAraDocumentController())
+    {
+        document->cancelSourceAnalysis(araSourceInfo.sourceFingerprint);
+        updateRecordingInfo();
+        return;
+    }
     if (analysisThread != nullptr)
     {
         analysisThread->signalThreadShouldExit();
@@ -3880,6 +4088,8 @@ void QQDeBreathAudioProcessorEditor::clearAnalysis()
 
 void QQDeBreathAudioProcessorEditor::handleAnalysisFinished(const QQDeBreathBridgeAnalysisResult& result)
 {
+    if (isAraContext() && result.sourceKey != araSourceInfo.sourceFingerprint)
+        return;
     auto finalResult = result;
     for (auto& region : finalResult.regions)
         region.type = qqNormalizedRegionType(region.type);

@@ -69,6 +69,7 @@ public:
     std::function<void(const juce::Array<QQDeBreathBridgeRegion>&)> onRegionsChanged;
     std::function<void(int)> onSelectedRegionChanged;
     std::function<void(double)> onSeekRequested;
+    std::function<void()> onUndoRequested, onRedoRequested;
     std::function<void(int)> onRegionDoubleClicked;
 
 private:
