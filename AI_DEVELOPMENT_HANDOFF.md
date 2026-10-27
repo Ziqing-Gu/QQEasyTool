@@ -1,17 +1,17 @@
 # QQEasyTool authoritative development handoff
 
-Current binary-source commit: a22a7015f0c233894201a5ee4ff76a2252e2c276 (tag v1.06).
-Current release: https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.06
-Current completion: Windows installed with hash parity; Plan B completed/frozen; public source and four Windows/source/guide Release assets verified. No Mac artifacts or CI runs. This Windows-only delivery does not claim full cross-platform Plan C.
+Current binary-source commit: 41822f3b4631e1569f757848f16981fdc11ccf79 (tag v1.08).
+Current release: https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.08
+Current completion: Windows delivery reused; Plan B/C/D complete; three Mac packages, new bilingual manuals and nine public assets verified.
 No original Studio One 7 project acceptance is claimed.
 
 Current Stable: 1.08 (internal 1.0.8), user-designated on 2026-10-27.
 Current development: 1.08 Stable; release complete.
 Scope: source-owned ARA background analysis, selection/history improvements and faster native analysis.
 Status: Plan B/C/D complete. See docs/release-completion-1.08.md; prior completed stages are inherited.
-Immediate installed rollback: 1.05 existing delivery.
-Previous user-designated Stable: 1.04. Historical rollback for 1.04 was 1.03.
-Current 1.06 delivery: Windows x64 VST3 only. No 1.06 Mac builds; older Mac packages remain historical.
+Immediate installed rollback: 1.07 previous verified delivery.
+Previous user-designated Stable: 1.06. Older rollback records below are historical.
+Historical 1.06 delivery was Windows only. Current 1.08 includes Windows and all three Mac formats.
 Toolchain: JUCE 8.0.13; CMake; MSVC 2022 / Xcode.
 Historical 1.04 build code commit: 631e27e3c1d9e4019dab3626c94cffcb60266d43. Historical 1.05 build source: 696cdecee6aaca0d8dd02a8ce7b8614c900bf7bb (tag v1.05).
 
