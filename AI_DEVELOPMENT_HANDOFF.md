@@ -6,9 +6,9 @@ Current completion: Windows installed with hash parity; Plan B completed/frozen;
 No original Studio One 7 project acceptance is claimed.
 
 Current Stable: 1.08 (internal 1.0.8), user-designated on 2026-10-27.
-Current development: 1.08 Stable.
+Current development: 1.08 Stable; release complete.
 Scope: source-owned ARA background analysis, selection/history improvements and faster native analysis.
-Status: Windows delivery and formal Plan B completed; public source tagged. Mac artifacts and Release checks are recorded with this version.
+Status: Plan B/C/D complete. See docs/release-completion-1.08.md; prior completed stages are inherited.
 Immediate installed rollback: 1.05 existing delivery.
 Previous user-designated Stable: 1.04. Historical rollback for 1.04 was 1.03.
 Current 1.06 delivery: Windows x64 VST3 only. No 1.06 Mac builds; older Mac packages remain historical.
@@ -108,3 +108,6 @@ English: Fixed older sources being evicted after an ARA document exceeds 32 sour
 
 
 Current release: Stable; new Plan B completed and frozen. Reuse the delivered Windows binary. Mac builds and final release verification are recorded separately. History retains 64 steps per source in the current session; no full undo-chain persistence across restart is claimed.
+
+
+Current completion record: [Plan B/C/D 1.08](docs/release-completion-1.08.md). Future plug-in development focuses on QQEasyTool.
