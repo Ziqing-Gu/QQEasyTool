@@ -6,9 +6,9 @@ Current completion: Windows installed with hash parity; Plan B completed/frozen;
 No original Studio One 7 project acceptance is claimed.
 
 Current Stable: 1.08 (internal 1.0.8), user-designated on 2026-10-27.
-Current development: 1.06 Stable; Windows only. No new Candidate stage.
-Scope: ARA cache/lifecycle/archive fixes; preserve EasyTool DSP/routing and 1.05 display.
-Status: Windows build, four regressions and actual VST3 factory loading passed; user-authorized installation and Stable. No macOS builds.
+Current development: 1.08 Stable.
+Scope: source-owned ARA background analysis, selection/history improvements and faster native analysis.
+Status: Windows delivery and formal Plan B completed; public source tagged. Mac artifacts and Release checks are recorded with this version.
 Immediate installed rollback: 1.05 existing delivery.
 Previous user-designated Stable: 1.04. Historical rollback for 1.04 was 1.03.
 Current 1.06 delivery: Windows x64 VST3 only. No 1.06 Mac builds; older Mac packages remain historical.
