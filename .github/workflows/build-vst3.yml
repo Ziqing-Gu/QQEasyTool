@@ -53,14 +53,14 @@ jobs:
           lipo "$binary" -verify_arch arm64
           codesign --force --deep --sign - "$plugin_path"
           codesign --verify --deep --strict --verbose=2 "$plugin_path"
-          ditto -c -k --sequesterRsrc --keepParent "$plugin_path" QQEasyTool-macOS-Apple-Silicon-1.08.zip
+          ditto -c -k --sequesterRsrc --keepParent "$plugin_path" QQEasyTool-macOS-Apple-Silicon-1.09.zip
 
       - name: Upload Apple Silicon VST3
         uses: actions/upload-artifact@v7
         with:
-          name: QQEasyTool-macOS-Apple-Silicon-1.08
+          name: QQEasyTool-macOS-Apple-Silicon-1.09
           path: |
-            QQEasyTool-macOS-Apple-Silicon-1.08.zip
+            QQEasyTool-macOS-Apple-Silicon-1.09.zip
             QQEasyTool-macOS-Apple-Silicon-architectures.txt
           if-no-files-found: error
 
@@ -95,14 +95,14 @@ jobs:
           lipo "$binary" -verify_arch x86_64
           codesign --force --deep --sign - "$plugin_path"
           codesign --verify --deep --strict --verbose=2 "$plugin_path"
-          ditto -c -k --sequesterRsrc --keepParent "$plugin_path" QQEasyTool-macOS-Intel-1.08.zip
+          ditto -c -k --sequesterRsrc --keepParent "$plugin_path" QQEasyTool-macOS-Intel-1.09.zip
 
       - name: Upload Intel VST3
         uses: actions/upload-artifact@v7
         with:
-          name: QQEasyTool-macOS-Intel-1.08
+          name: QQEasyTool-macOS-Intel-1.09
           path: |
-            QQEasyTool-macOS-Intel-1.08.zip
+            QQEasyTool-macOS-Intel-1.09.zip
             QQEasyTool-macOS-Intel-architectures.txt
           if-no-files-found: error
 
@@ -137,17 +137,17 @@ jobs:
           lipo "$binary" -verify_arch arm64 x86_64
           codesign --force --deep --sign - "$plugin_path"
           codesign --verify --deep --strict --verbose=2 "$plugin_path"
-          ditto -c -k --sequesterRsrc --keepParent "$plugin_path" QQEasyTool-macOS-AU-Universal-1.08.zip
-          cp docs/QQEasyTool-1.08-Windows-macOS-INSTALL.txt .
+          ditto -c -k --sequesterRsrc --keepParent "$plugin_path" QQEasyTool-macOS-AU-Universal-1.09.zip
+          cp docs/QQEasyTool-1.09-Windows-macOS-INSTALL.txt .
 
       - name: Upload Universal AU
         uses: actions/upload-artifact@v7
         with:
-          name: QQEasyTool-macOS-AU-Universal-1.08
+          name: QQEasyTool-macOS-AU-Universal-1.09
           path: |
-            QQEasyTool-macOS-AU-Universal-1.08.zip
+            QQEasyTool-macOS-AU-Universal-1.09.zip
             QQEasyTool-macOS-AU-Universal-architectures.txt
-            QQEasyTool-1.08-Windows-macOS-INSTALL.txt
+            QQEasyTool-1.09-Windows-macOS-INSTALL.txt
           if-no-files-found: error
 
   windows-x64:
@@ -173,11 +173,11 @@ jobs:
             Where-Object { $_.FullName -match 'Release' } |
             Select-Object -First 1
           if ($null -eq $plugin) { throw 'QQEasyTool.vst3 was not produced.' }
-          Compress-Archive -LiteralPath $plugin.FullName -DestinationPath QQEasyTool-Windows-x64-1.08.zip
+          Compress-Archive -LiteralPath $plugin.FullName -DestinationPath QQEasyTool-Windows-x64-1.09.zip
 
       - name: Upload Windows VST3
         uses: actions/upload-artifact@v7
         with:
-          name: QQEasyTool-Windows-x64-1.08
-          path: QQEasyTool-Windows-x64-1.08.zip
+          name: QQEasyTool-Windows-x64-1.09
+          path: QQEasyTool-Windows-x64-1.09.zip
           if-no-files-found: error

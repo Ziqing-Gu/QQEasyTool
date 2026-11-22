@@ -1269,6 +1269,11 @@ void QQDeBreathAudioProcessorEditor::performInitialHostLayoutSync()
 }
 void QQDeBreathAudioProcessorEditor::timerCallback()
 {
+    // ARA hosts may supply the final embedded bounds only after attachment.
+    // Keep the bounded handshake alive, including late host scale changes.
+    if (initialHostLayoutSyncPending)
+        performInitialHostLayoutSync();
+
     updateRecordingInfo();
 
     if (pendingBreathDetailPersist)

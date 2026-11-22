@@ -1,0 +1,51 @@
+QQEasyTool 1.09 Stable — Windows / macOS 安装说明
+Qing Audio / Ziqing Gu · 2026-11-22 · 内部版本 1.0.9
+
+1. 产品、许可与文件选择
+QQEasyTool 是人声区域编辑插件，支持自动识别 Breath、手动编辑 Noise / Breath / Others、分类型监听、Norm、Gain、EQ 和音轨分轨导出。完整功能，无试用期限或功能限制。自动齿音识别尚未提供。
+本包为源码可见非商业项目的编译成品。禁止商业使用；再分发时须免费提供完整对应源码，保留署名和许可证，注明来源、修改者、日期与内容，沿用相同许可。第三方依赖保留各自许可。
+对应源码：https://github.com/Ziqing-Gu/QQEasyTool/tree/v1.09
+完整源码与 ARA SDK / JUCE 另见 QQEasyTool-1.09-Complete-Source.zip。GitHub 自动 Source code ZIP/TAR 不是可安装插件。
+只包含一个插件 QQEasyTool：Windows / Mac VST3 为 QQEasyTool.vst3，Mac AU 为 QQEasyTool.component。本包不含独立应用。
+
+选择：
+- Windows 10/11 x64：QQEasyTool-Windows-x64-1.09.zip。
+- macOS 11 或更新、Apple Silicon 原生宿主：QQEasyTool-macOS-Apple-Silicon-1.09.zip。
+- macOS 11 或更新、Intel Mac 或以 Rosetta 运行的 Intel 宿主：QQEasyTool-macOS-Intel-1.09.zip。
+- macOS 11 或更新、需要 Audio Unit 的宿主：QQEasyTool-macOS-AU-Universal-1.09.zip，含 arm64 + x86_64。Logic Pro 选择 AU。
+只选一个与宿主进程架构相符的 VST3 包，不要安装两套同名 VST3。AU 与 VST3 是独立格式，只安装所需格式。多台机器或同时使用两种格式时，统一升级到 1.09。Linux 不提供。
+
+2. Windows 安装或升级
+先保存工程并完全退出 Studio One、Cubase、Nuendo、REAPER 及所有插件宿主/扫描器。
+解压 QQEasyTool-Windows-x64-1.09.zip，根层应出现整个 QQEasyTool.vst3 文件夹。
+将整个文件夹复制到 C:\Program Files\Common Files\VST3\，按提示提供管理员权限，覆盖旧 QQEasyTool.vst3。不要只复制文件夹内的 DLL，也不要改名内部文件。
+本版插件名称没有变化。避免用户插件目录和系统目录同时保留同格式旧版副本；更新之前可保留旧安装包用于回退。
+重新启动宿主，在插件管理器重新扫描 VST3；仍显示旧版时，确认实际扫描路径，完全退出宿主后重试扫描。必要时使用宿主官方插件缓存重建方法。
+打开编辑器，底部应显示 1.09。
+
+3. macOS VST3
+先完全退出宿主。按宿主架构选一个 VST3 ZIP，解压得到 QQEasyTool.vst3。
+Finder“前往”菜单按住 Option 可显示“资源库”，或使用“前往文件夹”。复制到 ~/Library/Audio/Plug-Ins/VST3/，也可选择所有用户目录 /Library/Audio/Plug-Ins/VST3/（需要管理员权限）。目录不存在可先创建。
+替换整个已有 bundle，只选择一个安装目录，避免用户和系统目录重复安装。
+重新打开宿主并重新扫描 VST3。加载失败时先核对宿主架构、路径、版本与隔离属性，必要时重启电脑。
+
+4. macOS AU
+解压 QQEasyTool-macOS-AU-Universal-1.09.zip，得到 QQEasyTool.component。
+复制整个 bundle 到 ~/Library/Audio/Plug-Ins/Components/，或 /Library/Audio/Plug-Ins/Components/（需要管理员权限），替换相同插件并避免重复副本。
+重新打开宿主；Logic Pro 在插件管理器中选择 QQEasyTool 并执行“重设并重新扫描所选项目”。宿主仍未发现新 AU 时退出并重开，必要时重启电脑。
+
+5. Mac 签名与隔离
+Mac 成品使用 ad-hoc 临时签名，未经 Apple Developer ID 公证。系统下载隔离可能阻止宿主加载。
+仅确认下载来源可信且因隔离无法加载时，在终端对自己实际安装的 bundle 执行相应一条命令：
+xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3"
+xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/Components/QQEasyTool.component"
+如果安装在系统 /Library，使用对应真实路径；需要时管理员授权。不要对整个插件目录或磁盘执行命令。来源不确定时不要解除隔离。完成后重新打开宿主、扫描，必要时重启电脑。
+
+6. 使用、变化与限制
+ARA 通过宿主的事件扩展/音频扩展入口加载，普通插入效果不自动成为 ARA。普通 VST3/AU 使用 Record 采集，再停止并 Analyze。自动分析只识别 Breath，其他区域手动建立和修改。
+本次修复 Studio One 等 ARA 宿主延迟窗口尺寸协商的调用遗漏。首次打开、改变面板宽度/缩放、关闭后重开时，检查右侧 Export Stems 和波形边缘完整。声音处理与操作流程未改。
+两份 1.08 版中英文图文手册原样沿用，仍适用于 1.09 的操作；不是重新编号的新手册。本次窗口修复以本说明及 Release 为准。
+内部 Undo/Redo 按音源保留最多 64 步，作用于当前处理器/文档会话；工程保存保留编辑，但完整撤销链不会跨应用重启持久保存。宿主历史的显示与分组由宿主决定。
+ARA 全长音频缓存的内存随活动素材时长/通道数增加，首次加载可能等待。后台 Analyze 可跨切轨/关闭编辑器继续；显式 Cancel 或宿主恢复会使旧任务结果失效。
+已通过本机 Windows 回归与加载检查；Mac 构建、架构和签名检查见对应 Release。自动检查不代表实际 Studio One/Cubase 工程或 Mac DAW 验收。先在工程副本试听后再渲染。
+下载、问题反馈：https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.09

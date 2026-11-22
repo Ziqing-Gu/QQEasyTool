@@ -1,0 +1,3 @@
+QQEasyTool 1.09 Stable
+Internal version: 1.0.9
+User-designated on 2026-11-22. Windows delivery reused. Previous Stable: 1.08.

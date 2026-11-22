@@ -1,0 +1,51 @@
+QQEasyTool 1.09 Stable — Windows / macOS Installation Guide
+Qing Audio / Ziqing Gu · 2026-11-22 · Internal version 1.0.9
+
+1. Product, license and file selection
+QQEasyTool provides automatic Breath detection, manual Noise / Breath / Others regions, independent monitoring, Norm, Gain, EQ and stem export. Full functionality, no expiry or feature restrictions. Automatic sibilance detection is not included.
+These are compiled binaries of a source-available non-commercial project. Commercial use is prohibited. Redistribution requires complete corresponding source free of charge, attribution and license notices, origin and modification details, and the same license. Third-party licenses remain applicable.
+Matching source: https://github.com/Ziqing-Gu/QQEasyTool/tree/v1.09
+QQEasyTool-1.09-Complete-Source.zip also includes ARA SDK and JUCE. GitHub's automatic Source code ZIP/TAR downloads are not installable plug-ins.
+This release contains one plug-in: QQEasyTool.vst3 for Windows/Mac VST3 and QQEasyTool.component for Mac AU. No standalone application is included.
+
+Choose:
+- Windows 10/11 x64: QQEasyTool-Windows-x64-1.09.zip.
+- macOS 11 or later, native Apple Silicon host: QQEasyTool-macOS-Apple-Silicon-1.09.zip.
+- macOS 11 or later, Intel Mac or Intel host running under Rosetta: QQEasyTool-macOS-Intel-1.09.zip.
+- macOS 11 or later, Audio Unit host: QQEasyTool-macOS-AU-Universal-1.09.zip (arm64 + x86_64). Logic Pro uses AU.
+Install only one VST3 architecture matching the host process. AU and VST3 are independent formats; install only the formats you use. Keep installed formats/machines on version 1.09 when upgrading. Linux is not provided.
+
+2. Windows install or upgrade
+Save the project and fully quit Studio One, Cubase, Nuendo, REAPER and all plug-in hosts/scanners.
+Extract QQEasyTool-Windows-x64-1.09.zip. It contains the complete QQEasyTool.vst3 directory at the archive root.
+Copy that whole directory to C:\Program Files\Common Files\VST3\, granting administrator permission if prompted and replacing the existing QQEasyTool.vst3. Do not copy only its internal binary or rename internal files.
+The plug-in filename has not changed. Avoid duplicate old copies in user/system plug-in paths. Preserve the previous installation package if you need a rollback.
+Reopen the host and rescan VST3 in its plug-in manager. If an old version remains, check the scanned path, fully quit and rescan again; use the host's official plug-in cache reset method if needed.
+The editor footer must show 1.09.
+
+3. macOS VST3
+Quit the host. Choose one VST3 ZIP matching its architecture and extract QQEasyTool.vst3.
+In Finder, hold Option in the Go menu to show Library, or use Go to Folder. Copy the entire bundle to ~/Library/Audio/Plug-Ins/VST3/, or use /Library/Audio/Plug-Ins/VST3/ for all users (administrator permission may be needed). Create the target directory if necessary.
+Replace the existing bundle and use only one installation location; avoid duplicates in both user and system directories.
+Reopen the host and rescan VST3. If loading fails, check architecture, path, version and quarantine attributes; restart the computer if necessary.
+
+4. macOS AU
+Extract QQEasyTool-macOS-AU-Universal-1.09.zip to obtain QQEasyTool.component.
+Copy the complete bundle to ~/Library/Audio/Plug-Ins/Components/, or /Library/Audio/Plug-Ins/Components/ with appropriate permission. Replace the matching plug-in and avoid duplicate copies.
+Reopen the host. In Logic Pro's Plug-in Manager, select QQEasyTool and use Reset & Rescan Selection. Quit/reopen the host, and restart the computer if the newly installed AU still is not discovered.
+
+5. Mac signing and quarantine
+The Mac packages are ad-hoc signed, not Apple Developer ID notarized. Download quarantine may prevent host loading.
+Only after confirming a trusted source and a quarantine-related failure, run the relevant command for your actual installed bundle in Terminal:
+xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3"
+xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/Components/QQEasyTool.component"
+Use the actual /Library path for a system installation and administrator authorization if required. Do not target the whole plug-in directory or disk. Never remove quarantine from an untrusted download. Reopen/rescan afterward, restarting the computer if necessary.
+
+6. Usage, changes and limitations
+Load ARA through the host's event/audio-extension command. An ordinary insert is not automatically ARA. Ordinary VST3/AU uses Record to capture audio, then Stop and Analyze. Automatic analysis identifies Breath only; create/edit other region types manually.
+This update restores the missing deferred window-size handshake in Studio One and other ARA hosts. Check Export Stems and the waveform's right edge after opening, resizing/scaling and reopening. Audio processing and the operating workflow are unchanged.
+The original illustrated Chinese/English manuals remain the 1.08 edition and still describe 1.09 operations. They are not relabelled as new manuals. See this guide and the Release for the window fix.
+Internal Undo/Redo keeps up to 64 steps per source in the current processor/document session. Project saving preserves edits, but the entire undo chain is not persisted across application restarts. Native host-history entries and grouping are host-dependent.
+Full-source ARA caching uses memory proportional to active duration/channels; initial loading may take time. Background Analyze continues across source switches/editor closure; explicit Cancel and host restore invalidate stale jobs.
+Windows regression/loading checks pass; see the Release for Mac build, architecture and signature checks. These do not represent acceptance in an actual Studio One/Cubase project or a real Mac DAW. Audition a project copy before rendering.
+Downloads and feedback: https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.09

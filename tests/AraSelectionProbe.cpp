@@ -102,6 +102,69 @@ struct NativeUpdateListener final : juce::AudioProcessorListener
 class QQEasyToolAraSelectionProbe
 {
 public:
+ // Exercise the real editor timer with a hidden native parent. The test host
+ // defers its final dock bounds until the editor requests a size negotiation.
+ static void hostLayout(QQDeBreathAudioProcessorEditor& editor)
+ {
+    editor.stopTimer();
+    editor.timerCallback();
+    require(editor.initialHostLayoutSyncPending && editor.initialHostLayoutSyncAttempts == 0,
+            "ARA layout must wait for native attachment");
+    juce::Component host;
+    host.setSize(2596, 760);
+    host.addToDesktop(0); // Hidden: no user window or DAW interaction.
+    host.addAndMakeVisible(editor);
+    struct ResizeRequests final : juce::ComponentListener
+    {
+        int count = 0;
+        void componentMovedOrResized(juce::Component&, bool, bool resized) override
+        { if (resized) ++count; }
+    } requests;
+    editor.addComponentListener(&requests);
+    struct Cleanup
+    {
+        QQDeBreathAudioProcessorEditor& editor;
+        ResizeRequests& requests;
+        ~Cleanup() { editor.removeComponentListener(&requests); }
+    } cleanup { editor, requests };
+
+    const auto settle = [&] (int width, int height)
+    {
+        const auto before = requests.count;
+        for (int tick = 0; tick < 8; ++tick)
+        {
+            editor.timerCallback();
+            if (requests.count > before && tick == 1)
+                editor.setSize(width, height); // Delayed host response.
+        }
+        require(requests.count > before, "ARA timer never requested initial host layout sync");
+        require(!editor.initialHostLayoutSyncPending && editor.initialHostLayoutSyncAttempts == 8,
+                "ARA layout sync did not finish its bounded handshake");
+        require(editor.getWidth() == width && editor.getHeight() == height,
+                "ARA sync discarded host dock bounds");
+        require(editor.waveformEditor.getRight() > width - 20,
+                "waveform did not expand to the host right edge");
+        require(editor.exportButton.getWidth() > 0
+                    && editor.getLocalBounds().contains(editor.exportButton.getBounds()),
+                "right-side export control was clipped");
+        const auto settledRequests = requests.count;
+        for (int tick = 0; tick < 30; ++tick) editor.timerCallback();
+        require(requests.count == settledRequests, "idle ARA editor kept resizing the host");
+    };
+    settle(2596, 760);
+    for (const float scale : { 1.25f, 1.5f, 2.0f, 1.0f })
+    {
+        editor.setScaleFactor(scale);
+        settle(1600, 720);
+    }
+    editor.setScaleFactor(1.0f);
+    settle(2596, 760);
+    auto image = editor.createComponentSnapshot(editor.getLocalBounds());
+    auto stream = juce::File::getCurrentWorkingDirectory().getChildFile("ara-wide-layout.png").createOutputStream();
+    require(stream != nullptr && stream->setPosition(0) && stream->truncate().wasOk(), "layout snapshot open failed");
+    require(juce::PNGImageFormat().writeImageToStream(image, *stream), "layout snapshot failed");
+    std::cout << "PASS: ARA native attachment, delayed wide dock bounds, scale changes, right-edge layout and bounded idle sync\n";
+ }
  static void ordinary()
  {
     QQDeBreathAudioProcessor processor;
@@ -111,6 +174,7 @@ public:
     processor.claimInitialGlobalDefaultsApplication();
     auto editor=std::make_unique<QQDeBreathAudioProcessorEditor>(processor);
     editor->timerCallback();
+    require(!editor->initialHostLayoutSyncPending, "ordinary VST3 scheduled an ARA host resize");
     QQDeBreathBridgeRegion r; r.type="Breath"; r.startTime=0.1; r.endTime=0.2; r.startSample=4800; r.endSample=9600; r.gainDb=-7;
     editor->waveformRegionsChanged({r});
     require(listener.dirty>0,"native custom edit did not notify host");
@@ -171,6 +235,7 @@ public:
       auto select=[&](int i) { ARA::ARAViewSelection s {}; s.structSize=sizeof(s); s.playbackRegionRefsCount=1; s.playbackRegionRefs=&regions[i]; view->notifySelection(&s); };
       select(0);
       auto editor=std::make_unique<QQDeBreathAudioProcessorEditor>(processor);
+      hostLayout(*editor);
       editor->reloadAraSource();
       auto verify=[&](int i) {
         if (editor->araSourceInfo.persistentId!="selection-track-"+juce::String(i))
@@ -212,7 +277,7 @@ public:
       editor->reloadAraSource(); verify(1);
       std::cout<<"PASS: Load retains selected source\n";
       require(processor.getAnalysisResult().regions[0].gainDb==-9,"Load erased saved edits");
-      editor.reset(); select(1); editor=std::make_unique<QQDeBreathAudioProcessorEditor>(processor); verify(1);
+      editor.reset(); select(1); editor=std::make_unique<QQDeBreathAudioProcessorEditor>(processor); hostLayout(*editor); verify(1);
       require(editor->breathGainSlider.getValue()==-11 && processor.getAnalysisResult().regions[0].gainDb==-9,"reopen lost current track");
       std::cout<<"PASS: rapid switching, late result rejected, Load and editor reopen preserve edits/parameters\n";
 

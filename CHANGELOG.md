@@ -1,3 +1,11 @@
+## 1.09 Stable — 2026-11-22 / ARA window layout
+
+中文：恢复 Easy Tool 编辑器定时器中遗漏的 ARA 窗口尺寸同步调用。首次挂载、重开窗口和宿主缩放改变后，已有的有限次数同步现在能够执行，修复延迟尺寸协商造成的右侧截断。只在第 1/4 次检查触发一像素协商，第 8 次停止。音频处理、分析模型、参数、项目状态格式和操作方法保持不变。
+
+English: Restores the missing editor-timer call to the existing bounded ARA host-layout handshake. Attachment, reopening and host scale changes can now complete deferred size negotiation, addressing right-side clipping. Two one-pixel nudges occur on checks 1/4 and synchronization stops on check 8. Audio processing, analysis, parameters, project format and user workflows are unchanged.
+
+验证 / Validation: 新回归在原 1.08 上失败，在 1.09 上通过；隐藏原生测试宿主覆盖 2596 × 760 面板、125%/150%/200% 缩放、重开和空闲稳定性，ARA 选择/历史/后台分析与音频定位回归通过。The new regression fails on the unchanged 1.08 editor and passes on 1.09. Hidden-native-host layout, ARA selection/history/background-analysis and transport checks pass. 用户指定 Stable，不代表网友原 Studio One 工程或 Mac DAW 的实机验收。User-designated Stable does not imply acceptance in the reporter's Studio One project or a real Mac DAW.
+
 ## 1.08 Stable — Background ARA analysis and faster sparse-audio analysis / 2026-10-27
 
 Current release state: 1.08 Stable by user instruction on 2026-10-27; Windows validation is reused and Plan B is complete and frozen. Public source and Mac release work do not rerun prior completed stages.

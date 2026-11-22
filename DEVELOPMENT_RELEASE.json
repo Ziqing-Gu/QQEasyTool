@@ -1,9 +1,10 @@
 {
   "product": "QQEasyTool",
-  "version": "1.08",
-  "internalVersion": "1.0.8",
+  "version": "1.09",
+  "internalVersion": "1.0.9",
   "status": "Stable",
   "userDesignatedStable": true,
-  "rollbackVersion": "1.07",
-  "realHostAcceptance": false
+  "previousDesignatedStable": "1.08",
+  "rollbackVersion": "1.08",
+  "actualStudioOneProjectVerified": false
 }

@@ -1,21 +1,23 @@
 {
   "product": "QQEasyTool",
-  "version": "1.08",
-  "internalVersion": "1.0.8",
+  "version": "1.09",
+  "internalVersion": "1.0.9",
   "status": "Stable",
-  "previousDesignatedStable": "1.06",
-  "rollbackVersion": "1.06",
-  "previousDeliveredVersion": "1.07",
-  "confirmedAt": "2026-10-27T17:53:47.675854+08:00",
+  "previousDesignatedStable": "1.08",
+  "rollbackVersion": "1.08",
+  "previousDeliveredVersion": "1.08",
+  "confirmedAt": "2026-11-22T20:38:37.778688+08:00",
   "binaryChangedForStableMarking": false,
   "pluginFiles": [
     {
+      "path": "Contents/Resources/moduleinfo.json",
       "bytes": 1417,
-      "sha256": "8b19f55f0cdcb7d5c5db9a431f775d547807aa39b1c88eca8bd6c8b212d5bb82"
+      "sha256": "e36a6259b77ea1bcde84c7b2564bbf6e40ea78eba5fd7f422484b4e615a75036"
     },
     {
-      "bytes": 7574016,
-      "sha256": "f9cdcb0a778bfb8a58deced0e4cc5e5af3f043f51ead8b9bd2e9f1e46a5be624"
+      "path": "Contents/x86_64-win/QQEasyTool.vst3",
+      "bytes": 7574528,
+      "sha256": "cd2065761146ba8c6a99982fd581cdc39f1430b91156ef100b8ff87b06d1ea91"
     }
   ]
 }
