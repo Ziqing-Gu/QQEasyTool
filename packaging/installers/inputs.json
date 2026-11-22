@@ -1,0 +1,45 @@
+{
+  "product": "QQEasyTool",
+  "version": "1.09",
+  "internalVersion": "1.0.9",
+  "sourceCommit": "d44e0923e8fa01157391fe6e6bc0016f70616090",
+  "releaseId": 454451546,
+  "repo": "Ziqing-Gu/QQEasyTool",
+  "windowsFiles": [
+    {
+      "path": "Contents/Resources/moduleinfo.json",
+      "bytes": 1417,
+      "sha256": "e36a6259b77ea1bcde84c7b2564bbf6e40ea78eba5fd7f422484b4e615a75036"
+    },
+    {
+      "path": "Contents/x86_64-win/QQEasyTool.vst3",
+      "bytes": 7574528,
+      "sha256": "cd2065761146ba8c6a99982fd581cdc39f1430b91156ef100b8ff87b06d1ea91"
+    }
+  ],
+  "macAssets": {
+    "QQEasyTool-macOS-Apple-Silicon-1.09.zip": {
+      "id": 779091884,
+      "name": "QQEasyTool-macOS-Apple-Silicon-1.09.zip",
+      "bytes": 2640256,
+      "sha256": "7d2094312cf917bf172de16aba05147878fd9d2066b6c7502bfe4a505ebb356e",
+      "url": "https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-macOS-Apple-Silicon-1.09.zip"
+    },
+    "QQEasyTool-macOS-AU-Universal-1.09.zip": {
+      "id": 779091850,
+      "name": "QQEasyTool-macOS-AU-Universal-1.09.zip",
+      "bytes": 5568877,
+      "sha256": "36ef3769733bfcad0ce087c400b2fa7edf3cec95fe3cff8d585f81c8b6b9d125",
+      "url": "https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-macOS-AU-Universal-1.09.zip"
+    },
+    "QQEasyTool-macOS-Intel-1.09.zip": {
+      "id": 779091843,
+      "name": "QQEasyTool-macOS-Intel-1.09.zip",
+      "bytes": 2925543,
+      "sha256": "4d5c2f5b69dfded0746f83ad8486260658c02942d678cada6b816e6e3bbbd55c",
+      "url": "https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-macOS-Intel-1.09.zip"
+    }
+  },
+  "minimumMacOS": "11.0",
+  "installerChoice": "Windows EXE plus separate Intel and Apple Silicon Mac PKGs; Mac allows VST3/AU selection"
+}

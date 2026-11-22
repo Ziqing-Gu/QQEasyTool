@@ -1,0 +1,29 @@
+name: Package existing QQEasyTool 1.09 installers
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  macos-installers:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+            label: Apple-Silicon
+          - runner: macos-15-intel
+            arch: x86_64
+            label: Intel
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Package verified release bundles and test installation
+        run: python3 packaging/installers/macos/package.py --arch '${{ matrix.arch }}' --work '${{ runner.temp }}/qqeasytool-installer-work' --output '${{ runner.temp }}/qqeasytool-installer-out'
+      - name: Upload installer and verification
+        uses: actions/upload-artifact@v7
+        with:
+          name: QQEasyTool-1.09-macOS-${{ matrix.label }}-Installer
+          path: ${{ runner.temp }}/qqeasytool-installer-out/*
+          if-no-files-found: error

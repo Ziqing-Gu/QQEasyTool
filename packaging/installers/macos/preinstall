@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+target="${3:-/}"
+case "$target" in /*) ;; *) echo 'Invalid installation volume.' >&2; exit 1;; esac
+root="${target%/}"
+if [ "$target" = / ]; then
+  if /usr/bin/pgrep -x 'Logic Pro|Cubase.*|Nuendo.*|Studio One|Fender Studio|REAPER|reaper|Live|FL Studio|BitwigStudio|WaveLab.*|QQ Host.*' >/dev/null; then
+    echo 'Please save your session and fully quit all audio hosts before installing QQEasyTool.' >&2
+    exit 1
+  fi
+fi
+for path in "$root/Library" "$root/Library/Audio" "$root/Library/Audio/Plug-Ins" "$root/Library/Audio/Plug-Ins/@FORMAT@" "$root/Library/Audio/Plug-Ins/@FORMAT@/@BUNDLE@"; do
+  if [ -L "$path" ]; then echo 'Refusing a symbolic-link installation path.' >&2; exit 1; fi
+done
+plist="$root/Library/Audio/Plug-Ins/@FORMAT@/@BUNDLE@/Contents/Info.plist"
+if [ -f "$plist" ]; then
+  current=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist" 2>/dev/null || true)
+  if /usr/bin/awk -v old="$current" -v new='1.0.9' 'BEGIN { split(old,a,"."); split(new,b,"."); for(i=1;i<=4;i++){if(a[i]+0>b[i]+0)exit 0;if(a[i]+0<b[i]+0)exit 1} exit 1 }'; then
+    echo 'A newer QQEasyTool version is installed; this installer will not downgrade it.' >&2
+    exit 1
+  fi
+fi
+exit 0
