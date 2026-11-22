@@ -12,5 +12,16 @@
   "newVersionPlanBCompleted": true,
   "release": "https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.09",
   "planCComplete": true,
-  "planDComplete": true
+  "planDComplete": true,
+  "installerDeliveryComplete": true,
+  "installerPackagingCommit": "591fb772041f996b6e6d55ecdbb5cb5145af7345",
+  "installerRun": "https://github.com/Ziqing-Gu/QQEasyTool/actions/runs/45027696522",
+  "installerFormats": [
+    "Windows x64 EXE",
+    "macOS Intel PKG",
+    "macOS Apple Silicon PKG"
+  ],
+  "installerSigned": false,
+  "installerNotarized": false,
+  "installerProductRebuilt": false
 }

@@ -1,0 +1,58 @@
+QQEasyTool 1.09 Stable — 安装包使用说明
+Qing Audio / Ziqing Gu · 2026-11-22
+https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.09
+
+1. 选择安装包
+
+Windows 10/11 x64：
+  Win/QQEasyTool-1.09-Windows-x64-Setup.exe
+  安装 Windows VST3，可用于普通插入和宿主支持的 ARA 事件扩展。
+
+Intel Mac（macOS 11 或更新）：
+  Mac/QQEasyTool-1.09-macOS-Intel-Setup.pkg
+
+Apple Silicon Mac（M 系列，macOS 11 或更新）：
+  Mac/QQEasyTool-1.09-macOS-Apple-Silicon-Setup.pkg
+
+Mac 两个安装包都提供 VST3 和 AU，可在“自定 / Customize”中勾选一种或两种，默认全选。
+VST3：选择与宿主进程架构一致的安装包。Apple Silicon 上的原生宿主选择 Apple-Silicon；以 Rosetta 运行的 Intel 宿主选择 Intel 安装包。两个 VST3 使用同一个安装位置，不要连续安装两套来尝试同时保留。
+AU：两包内都是同一份 Universal 2 AU，含 arm64 与 x86_64。Logic Pro 选择 AU；ARA 是否可用取决于宿主及其运行模式。
+这是宿主插件安装包，不是独立音频编辑软件，也不是 iPhone/iPad 应用。
+
+2. Windows 安装、升级与卸载
+
+保存工程，并完全退出所有 DAW 和插件扫描器。
+双击 EXE，核对名称为 QQEasyTool，再接受管理员权限提示及许可证，按“安装”完成。
+默认安装位置：
+  C:\Program Files\Common Files\VST3\QQEasyTool.vst3
+不需要手工复制 VST3。安装器更新此位置中的同名插件；项目和插件用户设置不在覆盖范围。
+若提示宿主仍在运行或文件被占用，退出相关程序后重试，不要强行覆盖。
+重新打开 DAW，重新扫描 VST3。ARA 请使用宿主的音频事件扩展入口；普通插入不会自动变成 ARA 工作流。
+卸载：Windows“设置 → 应用”中找到 QQEasyTool 1.09，选择卸载。先关闭 DAW。卸载器仅处理本安装器安装的文件，不清除用户工程或设置。
+本 EXE 未进行 Authenticode 签名。系统可能显示未识别的发布者；仅在确认来自上述官方仓库且文件校验一致后决定是否继续。
+
+3. Mac 安装与升级
+
+保存工程并完全退出 DAW/扫描器。双击所选 PKG，阅读许可，在“安装类型 → 自定”选择需要的格式，再授权安装。
+系统级目标目录（不跟随自定义插件路径迁移）：
+  VST3: /Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3
+  AU:   /Library/Audio/Plug-Ins/Components/QQEasyTool.component
+安装包会整体替换所选格式的同名 bundle，保留其他插件、工程及用户设置。更高版本已安装时会拒绝降级。
+重开 DAW 并重扫插件；Logic Pro 在插件管理器中重新扫描 QQEasyTool，必要时重启宿主。
+若过去手工安装在 ~/Library/Audio/Plug-Ins 或其他路径，请先检查重复副本，妥善移出旧副本，避免宿主继续扫描旧版。安装器不自动删除其他目录的文件。
+Mac 卸载：退出宿主后，仅将上述对应的 QQEasyTool.vst3 和/或 QQEasyTool.component 移到废纸篓；不要删除整个 VST3、Components 或 Plug-Ins 目录。用户设置和工程保留。
+
+4. Mac 安全提示
+
+这两份 PKG 未使用 Developer ID Installer 签名，也未经 Apple 公证。插件保持原有 ad-hoc 签名；安装、解包后的签名完整性已核验，但 ad-hoc 不等于 Apple 公证。
+首次打开可能被 macOS 拦截。如果你已经核实官方来源并决定信任此文件，可按 Apple 文档使用“系统设置 → 隐私与安全性 → 仍要打开”，只对当前文件进行确认。旧版 macOS 对应“系统偏好设置 → 安全性与隐私”。若系统报告恶意内容或文件被修改，停止安装并重新核实来源。
+Apple 官方说明：https://support.apple.com/en-us/102445
+不要全局关闭 Gatekeeper。此安装器不会更改系统安全策略或批量移除隔离属性。
+
+5. 操作手册与版本
+
+随包的 QQEasyTool-1.08-User-Manual-ZH-CN.pdf 与英文版保持原始 1.08 文件名和内容。界面操作仍适用于 1.09；安装步骤以本安装包说明为准，不再按旧手册手工复制插件。
+本轮仅将已发布的 1.09 成品封装为安装包，未重新编译或修改音频处理、分析、项目状态或插件版本。内部版本 1.0.9 与产品显示版本 1.09 对应。
+原 1.09 修复 Studio One 等 ARA 宿主中的延迟窗口尺寸协商导致的右侧显示截断。
+Windows 安装器已验证全新安装、由实际 1.08 成品覆盖升级、文件占用拒绝/重试与卸载；两类 Mac 在各自架构的 CI 系统上验证了 AU 单选、双格式安装及旧元数据/遗留资源覆盖测试。每个安装后的插件文件与原已发布成品字节一致。没有将 CI 安装检查表述为真实 DAW 工程验收。
+完整功能公开体验，无期限或功能限制。采用 Qing Audio Non-Commercial Source-Share License 1.0，禁止商业使用；具体条款以仓库 LICENSE 为准。

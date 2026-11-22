@@ -1,0 +1,58 @@
+QQEasyTool 1.09 Stable — Installer Guide
+Qing Audio / Ziqing Gu · 2026-11-22
+https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.09
+
+1. Choose an installer
+
+Windows 10/11 x64:
+  Win/QQEasyTool-1.09-Windows-x64-Setup.exe
+  Installs VST3 for ordinary insert use and ARA extensions supported by your host.
+
+Intel Mac, macOS 11 or newer:
+  Mac/QQEasyTool-1.09-macOS-Intel-Setup.pkg
+
+Apple Silicon Mac (M series), macOS 11 or newer:
+  Mac/QQEasyTool-1.09-macOS-Apple-Silicon-Setup.pkg
+
+Both Mac installers offer VST3 and AU. Select either or both through Customize; both are selected by default.
+Choose the VST3 architecture to match the host process. Use Apple-Silicon for native hosts on an M-series Mac, or Intel for an Intel host running under Rosetta. Both VST3 variants use the same installation path; installing both successively will replace the first one.
+Both packages contain the same Universal 2 AU with arm64 and x86_64. Logic Pro uses AU. ARA availability depends on the host and its execution mode.
+These are host plug-in installers, not standalone audio editors or iPhone/iPad applications.
+
+2. Windows installation, upgrade and removal
+
+Save sessions and fully quit all DAWs and plug-in scanners.
+Open the EXE, check that it identifies QQEasyTool, approve administrator access, review the license, and choose Install.
+The default installation location is:
+  C:\Program Files\Common Files\VST3\QQEasyTool.vst3
+No manual VST3 copying is needed. The installer updates this same-named plug-in while preserving projects and user settings.
+If a host is still running or a file is locked, close the relevant process and retry.
+Reopen the DAW and rescan VST3. For ARA, use the host's audio-event extension command; inserting the plug-in normally does not automatically enable ARA.
+To uninstall, close your DAW and remove QQEasyTool 1.09 through Windows Settings > Apps. The uninstaller handles its installed files without clearing user projects or settings.
+This EXE is not Authenticode signed. Windows may display an unknown publisher. Decide whether to proceed only after checking the official download source and file integrity.
+
+3. Mac installation and upgrade
+
+Save sessions and fully quit hosts/scanners. Open the selected PKG, review the license, choose formats in Installation Type > Customize, and authorize installation.
+System-wide destinations are fixed:
+  VST3: /Library/Audio/Plug-Ins/VST3/QQEasyTool.vst3
+  AU:   /Library/Audio/Plug-Ins/Components/QQEasyTool.component
+Selected same-named bundles are replaced as a whole. Other plug-ins, projects and user settings are preserved. The installer refuses to downgrade an installed newer version.
+Reopen the host and rescan. In Logic Pro, rescan QQEasyTool through Plug-in Manager and restart the host if needed.
+If you previously installed manually into ~/Library/Audio/Plug-Ins or another directory, check for duplicate copies and safely move the older copy out of scanned locations. The installer does not delete copies elsewhere.
+To uninstall, close hosts and move only the QQEasyTool.vst3 and/or QQEasyTool.component bundle at the paths above to Trash. Do not remove the VST3, Components or Plug-Ins parent directory. Projects and user settings remain intact.
+
+4. Mac security prompts
+
+The PKG installers are unsigned and are not Apple-notarized. Plug-ins retain their original ad-hoc signatures; signature integrity was verified after unpacking and installation. Ad-hoc signing is not notarization.
+macOS may block the first opening. If you have verified the official source and decide to trust this file, follow Apple's per-file Open Anyway procedure in System Settings > Privacy & Security. Older macOS versions use System Preferences > Security & Privacy. Stop and verify the source again if the system reports malware or a modified file.
+Apple's instructions: https://support.apple.com/en-us/102445
+Do not disable Gatekeeper globally. These installers do not change system security policy or remove quarantine attributes in bulk.
+
+5. Manuals, version and validation
+
+The included QQEasyTool-1.08-User-Manual-EN.pdf and Chinese illustrated manual retain their original 1.08 filenames and content. Their operating instructions apply to 1.09; this installer guide supersedes their manual-copy installation steps.
+This packaging update reuses the published 1.09 binaries without recompiling or changing audio processing, analysis, project state or plug-in version. Internal version 1.0.9 corresponds to displayed product version 1.09.
+The original 1.09 fix restores deferred ARA host-window size negotiation to address right-side clipping in hosts such as Studio One.
+Windows checks cover fresh installation, upgrade from the actual 1.08 payload, locked-file rejection/retry and uninstall. Each Mac architecture passed CI checks for AU-only selection, both-format installation and a simulated older-metadata/stale-resource upgrade. Installed files match the existing released binaries byte for byte. CI installation checks do not imply acceptance in a real DAW project.
+Full functionality is available without expiry or feature limits under Qing Audio Non-Commercial Source-Share License 1.0. Commercial use is prohibited; see the repository LICENSE for the full terms.

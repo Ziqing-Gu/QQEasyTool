@@ -60,37 +60,48 @@ Previously distributed copies retain rights already granted; this License applie
 
 ## 3. 最新下载与说明书 / Downloads and manuals
 
-当前公开版本 / Current public release: **1.09 Stable** · 2026-11-22
+当前公开版本 / Current public release: **1.09 Stable** · Installer delivery updated 2026-11-22
 
 [**最新版 Release / Latest release**](https://github.com/Ziqing-Gu/QQEasyTool/releases/latest)
 
 | 下载 / Download | 选择说明 / Selection |
 |---|---|
-| [Windows x64 VST3](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-Windows-x64-1.09.zip) | Windows 10/11 x64 |
-| [macOS Apple Silicon VST3](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-macOS-Apple-Silicon-1.09.zip) | macOS 11+ · arm64 |
-| [macOS Intel VST3](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-macOS-Intel-1.09.zip) | macOS 11+ · x86_64 / Rosetta host |
-| [macOS Universal 2 AU](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-macOS-AU-Universal-1.09.zip) | macOS 11+ · arm64 + x86_64 · Logic Pro |
-| [Windows / macOS 安装说明（中文）](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-Windows-macOS-INSTALL-ZH-CN.txt) | Windows / macOS 安装、升级及故障排查 |
-| [Installation Guide (English)](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-Windows-macOS-INSTALL.txt) | Windows / macOS installation, upgrades and troubleshooting |
-| [图文用户手册（中文，1.08 版）](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.08-User-Manual-ZH-CN.pdf) | 原版沿用，操作适用于 1.09 |
-| [Illustrated User Manual (English, 1.08 edition)](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.08-User-Manual-EN.pdf) | Unchanged; operating instructions also apply to 1.09 |
-| [完整对应源码 / Complete matching source](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-Complete-Source.zip) | 1.09 source + ARA SDK + JUCE 8.0.13; not an installer |
+| [Windows 安装包 / Installer](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-Windows-x64-Setup.exe) | Windows 10/11 x64 · VST3 / ARA |
+| [Intel Mac 安装包 / Installer](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-macOS-Intel-Setup.pkg) | macOS 11+ · Intel VST3 + Universal 2 AU |
+| [Apple Silicon Mac 安装包 / Installer](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-macOS-Apple-Silicon-Setup.pkg) | macOS 11+ · arm64 VST3 + Universal 2 AU |
+| [安装包说明（中文）](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-Installer-Guide-ZH-CN.txt) | 安装、升级、格式选择与卸载 |
+| [Installer Guide (English)](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-Installer-Guide-EN.txt) | Installation, upgrade, format selection and removal |
+| [图文用户手册（中文，1.08 版）](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.08-User-Manual-ZH-CN.pdf) | 操作适用于 1.09；安装以新版安装包说明为准 |
+| [Illustrated Manual (English, 1.08 edition)](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.08-User-Manual-EN.pdf) | Operations apply to 1.09; use the new installer guide for installation |
+| [插件对应完整源码 / Complete plug-in source](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-Complete-Source.zip) | 原 1.09 插件源码与依赖；安装器源码见下方 / Installer sources below |
 
-Windows 10/11 x64；macOS 11+。选择一个与宿主架构相符的 Mac VST3；AU 同时包含 arm64/x86_64，Logic Pro 使用 AU。Mac 为 ad-hoc 签名，未经 Developer ID 公证。安装、升级、重扫与可信下载隔离处理见上表双语说明。Linux 不提供。
+直接运行 Windows EXE 或 Mac PKG；Mac 可在“自定 / Customize”中选择 VST3、AU 或两者。Apple Silicon 原生宿主选择 Apple-Silicon；Intel Mac 或 Rosetta Intel 宿主选择 Intel。两包的 AU 都是 Universal 2。两个 VST3 架构使用同一安装位置，安装时选择其一。安装前保存工程并完全退出 DAW，完成后重新扫描插件。
 
-Choose one Mac VST3 matching the host process; Universal 2 AU supports both architectures. Mac packages are ad-hoc signed, not notarized. See the bilingual guides for installation, upgrades, rescanning and trusted-download quarantine handling. Linux is not provided.
+Run the Windows EXE or Mac PKG. Mac Customize offers VST3, AU or both. Choose Apple-Silicon for native M-series hosts, or Intel for Intel Macs / Rosetta Intel hosts. Both include the same Universal 2 AU. The two VST3 architectures share one destination; choose one. Save sessions, fully quit hosts before installation, and rescan afterward.
 
-两份图文手册保留原 1.08 版，操作说明仍适用于 1.09；本次窗口修复见安装说明和版本记录。 / The original 1.08 illustrated manuals still describe 1.09 operations; see the guides and changes for this window fix.
+Windows EXE 未进行 Authenticode 签名；Mac PKG 未签名、未公证，插件保留原有 ad-hoc 签名。系统首次打开的提示见双语安装包说明。最低系统：Windows 10/11 x64、macOS 11。不提供 Linux 或 iOS 版本。
 
-GitHub 自动生成的 `Source code (zip)` / `Source code (tar.gz)` 不是可安装插件。 / Automatic source archives are not installable plug-ins.
+The Windows EXE is not Authenticode signed. Mac PKGs are unsigned and not notarized; plug-ins retain their original ad-hoc signatures. See the installer guides for first-opening prompts. Minimum systems: Windows 10/11 x64 and macOS 11. Linux and iOS are not provided.
 
-用户指定 Stable；已通过自动测试和跨平台构建核验，但未声称网友 Studio One 工程或实际 Mac DAW 验收。 / User-designated Stable; automated tests and cross-platform build checks are not acceptance in the reporter's project or a real Mac DAW.
+图文手册保留原始 1.08 版文件名和内容，界面操作仍适用于 1.09；安装方式以新版安装包说明为准。 / The illustrated manuals retain their original 1.08 edition and still apply to 1.09 operations; follow the new installer guides for installation.
 
-[构建 / Build](docs/build.md) · [开发交接 / Handoff](AI_DEVELOPMENT_HANDOFF.md)
+插件源码 / Plug-in source: [`d44e0923e8fa01157391fe6e6bc0016f70616090`](https://github.com/Ziqing-Gu/QQEasyTool/tree/d44e0923e8fa01157391fe6e6bc0016f70616090) · tag `v1.09`
+
+安装器源码 / Installer source: [`591fb772041f996b6e6d55ecdbb5cb5145af7345`](https://github.com/Ziqing-Gu/QQEasyTool/tree/591fb772041f996b6e6d55ecdbb5cb5145af7345/packaging/installers) · [打包和安装验证 / Packaging and installation checks](https://github.com/Ziqing-Gu/QQEasyTool/actions/runs/45027696522)
+
+Windows 与两类 Mac 安装包内的插件均沿用已发布的 1.09 成品，字节核验一致，未重新编译。Windows 全新安装、实际 1.08 升级、锁定拒绝/重试与卸载通过；两类 Mac 的 AU 单选、双格式安装、模拟旧元数据升级及遗留资源替换通过。此安装检查不等于真实 DAW 工程验收。
+
+All installers reuse the published 1.09 plug-ins byte for byte, without recompiling. Windows fresh installation, actual 1.08 upgrade, locked-file rejection/retry and uninstall passed. Both Mac architectures passed AU-only selection, both-format installation, simulated older-metadata upgrade and stale-resource replacement checks. These checks do not imply real DAW project acceptance.
+
+GitHub 自动源码 ZIP/TAR 不是安装包。 / GitHub automatic source archives are not installers.
+
+[构建 / Build](docs/build.md) · [安装器打包 / Installer packaging](docs/installers/README.md) · [开发交接 / Handoff](AI_DEVELOPMENT_HANDOFF.md)
 
 ## 4. 逐版本更新 / Version history
 
 ### 1.09 Stable — 2026-11-22 / ARA window layout
+
+安装包交付更新：新增 Windows EXE、Intel Mac PKG 和 Apple Silicon Mac PKG。Mac 可选 VST3/AU，沿用同一 1.09 插件成品，不改变 Stable、版本或已冻结备份。 / Installer delivery update: Windows EXE plus Intel and Apple Silicon Mac PKGs, with selectable VST3/AU on Mac. Existing 1.09 plug-in binaries, Stable status and frozen backup remain unchanged.
 
 中文：恢复 Easy Tool 编辑器定时器中遗漏的 ARA 窗口尺寸同步调用。首次挂载、重开窗口和宿主缩放改变后，已有的有限次数同步现在能够执行，修复延迟尺寸协商造成的右侧截断。只在第 1/4 次检查触发一像素协商，第 8 次停止。音频处理、分析模型、参数、项目状态格式和操作方法保持不变。
 
@@ -333,3 +344,5 @@ The date is not specified in the surviving record. Status: retained experimental
 ## 5. 历史下载 / Historical downloads
 
 [全部历史版本 / All releases](https://github.com/Ziqing-Gu/QQEasyTool/releases)
+
+原 1.09 手工安装用 ZIP 资产保留在同一 Release 供历史使用；当前默认下载为上方三份安装包。 / Original 1.09 manual-install ZIP assets remain in the same Release for historical use; the three installers above are the current delivery.

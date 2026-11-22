@@ -1,14 +1,14 @@
 # QQEasyTool authoritative development handoff
 
-Current binary-source commit: 41822f3b4631e1569f757848f16981fdc11ccf79 (tag v1.08).
-Current release: https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.08
-Current completion: Windows delivery reused; Plan B/C/D complete; three Mac packages, new bilingual manuals and nine public assets verified.
+Current binary-source commit: d44e0923e8fa01157391fe6e6bc0016f70616090 (tag v1.09).
+Current release: https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.09
+Current completion: Plan C/D installer delivery complete; Windows EXE and Intel/Apple Silicon PKGs, guides/manuals and public assets verified. Prior Plan B inherited without access.
 No original Studio One 7 project acceptance is claimed.
 
 Current Stable: 1.09 (internal 1.0.9), user-designated 2026-11-22; previous Stable/rollback: 1.08.
-Current development: 1.09 Stable. Plan B/C/D complete on 2026-11-22; Windows reused, three Mac packages and nine public assets verified.
+Current development: 1.09 Stable; installer delivery completed on 2026-11-22 with unchanged product binaries.
 Scope: Restore the missing bounded ARA host-layout timer call. Audio processing and analysis unchanged.
-Status: 1.09 publicly released; existing 1.08 illustrated manuals are reused unchanged. Studio One user-project acceptance remains unverified.
+Status: 1.09 installer delivery published. Existing frozen Plan B untouched. Actual Mac DAW acceptance remains unverified.
 Immediate installed rollback: 1.08. Current user-designated Stable: 1.09.
 Previous user-designated Stable: 1.06. Older rollback records below are historical.
 Historical 1.06 delivery was Windows only. Current 1.08 includes Windows and all three Mac formats.
@@ -131,3 +131,19 @@ Only the active source and completed records are used for publication; frozen ba
 [Release](https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.09) · [Mac build](https://github.com/Ziqing-Gu/QQEasyTool/actions/runs/45024036129)
 
 Frozen source backups are not read or refreshed. No actual Studio One project or real Mac DAW acceptance is claimed.
+
+# QQEasyTool 1.09 installer delivery completion
+
+2026-11-22 — user-requested Plan C/D installer delivery. Product remains user-designated 1.09 Stable (internal 1.0.9).
+
+Previously completed / inherited: product fix, Windows and Mac binary builds, Stable designation, frozen Plan B and original public v1.09 source/release. No product rebuild, version change, tag movement or backup access occurred in this packaging update.
+
+Newly completed: Windows x64 EXE; Intel and Apple Silicon macOS PKGs with selectable VST3 and Universal 2 AU; bilingual installer guides; unchanged illustrated manuals; installer-only desktop/output delivery; public installer assets and current bilingual download instructions.
+
+Windows verification: fresh install, actual 1.08 payload upgrade, locked-file rejection and retry, uninstall; unrelated files/settings preserved. macOS verification on native Intel and ARM runners: AU-only choice, both-format fresh install, simulated older-metadata upgrade, stale-resource replacement, receipts and strict original ad-hoc signature checks. Every installed plug-in file matches the published 1.09 payload. No actual Mac DAW acceptance is claimed.
+
+The EXE is not Authenticode signed. PKGs are unsigned and not notarized. Original plug-in ad-hoc signatures are preserved. Signed/notarized distribution is not part of this completed packaging scope.
+
+Product source: `d44e0923e8fa01157391fe6e6bc0016f70616090` (tag v1.09). Installer recipe source: `591fb772041f996b6e6d55ecdbb5cb5145af7345`. [Installer CI](https://github.com/Ziqing-Gu/QQEasyTool/actions/runs/45027696522) · [Release](https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.09).
+
+Historical raw ZIP assets and old user deliveries remain intact. New user delivery contains three installers, two installer guides and two original illustrated PDFs. The frozen Plan B is referenced solely from its prior completion state and is not read or refreshed.
