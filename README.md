@@ -60,25 +60,31 @@ Previously distributed copies retain rights already granted; this License applie
 
 ## 3. 最新下载与说明书 / Downloads and manuals
 
-1.09 跨平台发布正在准备，当前已公开版本为 **1.08**。 / Version 1.09 is being prepared; the current published version is **1.08**.
+当前公开版本 / Current public release: **1.09 Stable** · 2026-11-22
 
 [**最新版 Release / Latest release**](https://github.com/Ziqing-Gu/QQEasyTool/releases/latest)
 
-| 文件 / File | 用途 / Use |
+| 下载 / Download | 选择说明 / Selection |
 |---|---|
-| [QQEasyTool-1.08-Complete-Source.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.08/QQEasyTool-1.08-Complete-Source.zip) | 1.08 |
-| [QQEasyTool-1.08-User-Manual-EN.pdf](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.08/QQEasyTool-1.08-User-Manual-EN.pdf) | 1.08 图文手册 / illustrated manual |
-| [QQEasyTool-1.08-User-Manual-ZH-CN.pdf](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.08/QQEasyTool-1.08-User-Manual-ZH-CN.pdf) | 1.08 图文手册 / illustrated manual |
-| [QQEasyTool-1.08-Windows-macOS-INSTALL-ZH-CN.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.08/QQEasyTool-1.08-Windows-macOS-INSTALL-ZH-CN.txt) | 1.08 |
-| [QQEasyTool-1.08-Windows-macOS-INSTALL.txt](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.08/QQEasyTool-1.08-Windows-macOS-INSTALL.txt) | 1.08 |
-| [QQEasyTool-macOS-Apple-Silicon-1.08.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.08/QQEasyTool-macOS-Apple-Silicon-1.08.zip) | 1.08 |
-| [QQEasyTool-macOS-AU-Universal-1.08.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.08/QQEasyTool-macOS-AU-Universal-1.08.zip) | 1.08 |
-| [QQEasyTool-macOS-Intel-1.08.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.08/QQEasyTool-macOS-Intel-1.08.zip) | 1.08 |
-| [QQEasyTool-Windows-x64-1.08.zip](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.08/QQEasyTool-Windows-x64-1.08.zip) | 1.08 |
+| [Windows x64 VST3](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-Windows-x64-1.09.zip) | Windows 10/11 x64 |
+| [macOS Apple Silicon VST3](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-macOS-Apple-Silicon-1.09.zip) | macOS 11+ · arm64 |
+| [macOS Intel VST3](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-macOS-Intel-1.09.zip) | macOS 11+ · x86_64 / Rosetta host |
+| [macOS Universal 2 AU](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-macOS-AU-Universal-1.09.zip) | macOS 11+ · arm64 + x86_64 · Logic Pro |
+| [Windows / macOS 安装说明（中文）](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-Windows-macOS-INSTALL-ZH-CN.txt) | Windows / macOS 安装、升级及故障排查 |
+| [Installation Guide (English)](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-Windows-macOS-INSTALL.txt) | Windows / macOS installation, upgrades and troubleshooting |
+| [图文用户手册（中文，1.08 版）](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.08-User-Manual-ZH-CN.pdf) | 原版沿用，操作适用于 1.09 |
+| [Illustrated User Manual (English, 1.08 edition)](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.08-User-Manual-EN.pdf) | Unchanged; operating instructions also apply to 1.09 |
+| [完整对应源码 / Complete matching source](https://github.com/Ziqing-Gu/QQEasyTool/releases/download/v1.09/QQEasyTool-1.09-Complete-Source.zip) | 1.09 source + ARA SDK + JUCE 8.0.13; not an installer |
+
+Windows 10/11 x64；macOS 11+。选择一个与宿主架构相符的 Mac VST3；AU 同时包含 arm64/x86_64，Logic Pro 使用 AU。Mac 为 ad-hoc 签名，未经 Developer ID 公证。安装、升级、重扫与可信下载隔离处理见上表双语说明。Linux 不提供。
+
+Choose one Mac VST3 matching the host process; Universal 2 AU supports both architectures. Mac packages are ad-hoc signed, not notarized. See the bilingual guides for installation, upgrades, rescanning and trusted-download quarantine handling. Linux is not provided.
+
+两份图文手册保留原 1.08 版，操作说明仍适用于 1.09；本次窗口修复见安装说明和版本记录。 / The original 1.08 illustrated manuals still describe 1.09 operations; see the guides and changes for this window fix.
 
 GitHub 自动生成的 `Source code (zip)` / `Source code (tar.gz)` 不是可安装插件。 / Automatic source archives are not installable plug-ins.
 
-Windows 10/11 x64；macOS 11+。按宿主架构选择一个 Mac VST3；AU 为 Universal 2。Mac 为 ad-hoc 签名，未经 Developer ID 公证。详细安装、升级和隔离处理见双语安装说明。自动测试不代表实际 DAW 工程验收。 / Choose one Mac VST3 matching the host architecture; AU is Universal 2. Mac packages are ad-hoc signed, not notarized. See the bilingual guides for installation, upgrade and quarantine details. Automated checks are not real-project DAW acceptance.
+用户指定 Stable；已通过自动测试和跨平台构建核验，但未声称网友 Studio One 工程或实际 Mac DAW 验收。 / User-designated Stable; automated tests and cross-platform build checks are not acceptance in the reporter's project or a real Mac DAW.
 
 [构建 / Build](docs/build.md) · [开发交接 / Handoff](AI_DEVELOPMENT_HANDOFF.md)
 

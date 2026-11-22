@@ -6,10 +6,10 @@ Current completion: Windows delivery reused; Plan B/C/D complete; three Mac pack
 No original Studio One 7 project acceptance is claimed.
 
 Current Stable: 1.09 (internal 1.0.9), user-designated 2026-11-22; previous Stable/rollback: 1.08.
-Current development: 1.09 Stable; Windows build/test/install inherited, new Plan B completed and frozen. Public Plan C/D in progress.
-Scope: source-owned ARA background analysis, selection/history improvements and faster native analysis.
-Status: Plan B/C/D complete. See docs/release-completion-1.08.md; prior completed stages are inherited.
-Immediate installed rollback: 1.07 previous verified delivery.
+Current development: 1.09 Stable. Plan B/C/D complete on 2026-11-22; Windows reused, three Mac packages and nine public assets verified.
+Scope: Restore the missing bounded ARA host-layout timer call. Audio processing and analysis unchanged.
+Status: 1.09 publicly released; existing 1.08 illustrated manuals are reused unchanged. Studio One user-project acceptance remains unverified.
+Immediate installed rollback: 1.08. Current user-designated Stable: 1.09.
 Previous user-designated Stable: 1.06. Older rollback records below are historical.
 Historical 1.06 delivery was Windows only. Current 1.08 includes Windows and all three Mac formats.
 Toolchain: JUCE 8.0.13; CMake; MSVC 2022 / Xcode.
@@ -121,3 +121,13 @@ English: Restores the missing editor-timer call to the existing bounded ARA host
 验证 / Validation: 新回归在原 1.08 上失败，在 1.09 上通过；隐藏原生测试宿主覆盖 2596 × 760 面板、125%/150%/200% 缩放、重开和空闲稳定性，ARA 选择/历史/后台分析与音频定位回归通过。The new regression fails on the unchanged 1.08 editor and passes on 1.09. Hidden-native-host layout, ARA selection/history/background-analysis and transport checks pass. 用户指定 Stable，不代表网友原 Studio One 工程或 Mac DAW 的实机验收。User-designated Stable does not imply acceptance in the reporter's Studio One project or a real Mac DAW.
 
 Only the active source and completed records are used for publication; frozen backups must not be accessed.
+
+# QQEasyTool 1.09 release completion / 发布完成
+
+2026-11-22 — user-designated Stable. Plan B/C/D complete. Windows delivery reused; three Mac jobs built from source commit `d44e0923e8fa01157391fe6e6bc0016f70616090`, tag `v1.09`. Nine public assets and the eight-file desktop user package verified. Existing 1.08 illustrated manuals remain unchanged and apply to 1.09 operations.
+
+1.09 由用户设为 Stable；Windows 成品继承，Mac 三类成品构建成功并核验；九项公开资产和八文件桌面用户包已核对。旧手册不改版号，继续适用于本版操作。
+
+[Release](https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.09) · [Mac build](https://github.com/Ziqing-Gu/QQEasyTool/actions/runs/45024036129)
+
+Frozen source backups are not read or refreshed. No actual Studio One project or real Mac DAW acceptance is claimed.

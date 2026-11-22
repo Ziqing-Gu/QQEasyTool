@@ -6,5 +6,11 @@
   "userDesignatedStable": true,
   "previousDesignatedStable": "1.08",
   "rollbackVersion": "1.08",
-  "actualStudioOneProjectVerified": false
+  "actualStudioOneProjectVerified": false,
+  "macBinariesBuilt": true,
+  "newVersionPublished": true,
+  "newVersionPlanBCompleted": true,
+  "release": "https://github.com/Ziqing-Gu/QQEasyTool/releases/tag/v1.09",
+  "planCComplete": true,
+  "planDComplete": true
 }
